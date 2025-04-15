@@ -1,4 +1,4 @@
-from model.train import get_csvs_df
+from model.v1train import get_csvs_df
 import os
 import pytest
 
