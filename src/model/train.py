@@ -39,12 +39,13 @@ def get_csvs_df(path):
 def split_data(df):
     """
     Splits the dataset into training and testing sets.
-    Assumes the target column is named 'target'.
+    Assumes the target column is named 'Diabetic'.
     """
-    if 'target' not in df.columns:
-        raise RuntimeError("The dataset must contain a 'target' column.")
-    X = df.drop(columns=['target'])
-    y = df['target']
+    if 'Diabetic' not in df.columns:
+        raise RuntimeError("The dataset must contain a 'Diabetic' column.")
+    X = df[['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure', 'TricepsThickness',
+            'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']].values
+    y = df['Diabetic'].values
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
