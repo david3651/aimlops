@@ -1,27 +1,30 @@
 # Import libraries
-
 import argparse
 import glob
 import os
 
 import pandas as pd
-
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import mlflow
+import mlflow.sklearn
 
 
 # define functions
 def main(args):
-    # TO DO: enable autologging
+    # Enable autologging
+    mlflow.autolog()
 
+    # Start an MLflow run
+    with mlflow.start_run():
+        # Read data
+        df = get_csvs_df(args.training_data)
 
-    # read data
-    df = get_csvs_df(args.training_data)
+        # Split data
+        X_train, X_test, y_train, y_test = split_data(df)
 
-    # split data
-    X_train, X_test, y_train, y_test = split_data(df)
-
-    # train model
-    train_model(args.reg_rate, X_train, X_test, y_train, y_test)
+        # Train model
+        train_model(args.reg_rate, X_train, X_test, y_train, y_test)
 
 
 def get_csvs_df(path):
@@ -33,42 +36,56 @@ def get_csvs_df(path):
     return pd.concat((pd.read_csv(f) for f in csv_files), sort=False)
 
 
-# TO DO: add function to split data
+def split_data(df):
+    """
+    Splits the dataset into training and testing sets.
+    Assumes the target column is named 'target'.
+    """
+    if 'target' not in df.columns:
+        raise RuntimeError("The dataset must contain a 'target' column.")
+    X = df.drop(columns=['target'])
+    y = df['target']
+    return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 def train_model(reg_rate, X_train, X_test, y_train, y_test):
-    # train model
-    LogisticRegression(C=1/reg_rate, solver="liblinear").fit(X_train, y_train)
+    # Train model
+    model = LogisticRegression(C=1/reg_rate, solver="liblinear")
+    model.fit(X_train, y_train)
+
+    # Evaluate model
+    accuracy = model.score(X_test, y_test)
+    print(f"Model accuracy: {accuracy}")
 
 
 def parse_args():
-    # setup arg parser
+    # Setup argument parser
     parser = argparse.ArgumentParser()
 
-    # add arguments
+    # Add arguments
     parser.add_argument("--training_data", dest='training_data',
                         type=str)
     parser.add_argument("--reg_rate", dest='reg_rate',
                         type=float, default=0.01)
 
-    # parse args
+    # Parse args
     args = parser.parse_args()
 
-    # return args
+    # Return args
     return args
 
-# run script
+# Run script
 if __name__ == "__main__":
-    # add space in logs
+    # Add space in logs
     print("\n\n")
     print("*" * 60)
 
-    # parse args
+    # Parse args
     args = parse_args()
 
-    # run main function
+    # Run main function
     main(args)
 
-    # add space in logs
+    # Add space in logs
     print("*" * 60)
     print("\n\n")
