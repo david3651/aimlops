@@ -1,15 +1,18 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
 code: model
 command: >-
-  python 
-  --
-  --
+  python v2train.py
+  --training_data ${{inputs.training_data}}
+  --reg_rate ${{inputs.reg_rate}}
 inputs:
-  training_data: 
-    type: uri_folder 
-    path: 
+  training_data:
+    type: uri_folder
+    path: azureml:diabetes-dev-folder@latest  # Registered data asset
   reg_rate: 0.01
 environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
-compute: 
-experiment_name: 
-description: 
+compute: azureml:cpu-cluster  # Compute name
+experiment_name: diabetes-classification-experiment
+description: >
+  This job trains a logistic regression model on the diabetes dataset using MLflow autologging.
+resources:
+  instance_type: Machine Learning compute
