@@ -20,6 +20,8 @@ jobs:
 
     - name: Submit Azure ML Job
       run: |
-        az ml job create --file src/job.yml
+        az ml job create --file src/job.yml \
+          --resource-group mldemo \
+          --workspace-name mldemows
 
 
