@@ -43,8 +43,10 @@ def split_data(df):
     """
     if 'Diabetic' not in df.columns:
         raise RuntimeError("The dataset must contain a 'Diabetic' column.")
-    X = df[['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure', 'TricepsThickness',
-            'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']].values
+    X = df[
+        ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure', 'TricepsThickness',
+         'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
+    ].values
     y = df['Diabetic'].values
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -74,6 +76,7 @@ def parse_args():
 
     # Return args
     return args
+
 
 # Run script
 if __name__ == "__main__":
