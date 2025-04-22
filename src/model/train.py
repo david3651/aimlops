@@ -53,7 +53,7 @@ def split_data(df):
 
 def train_model(reg_rate, X_train, X_test, y_train, y_test):
     # Train model
-    model = LogisticRegression(C=1/reg_rate, solver="liblinear")
+    model = LogisticRegression(C=1 / reg_rate, solver="liblinear")
     model.fit(X_train, y_train)
 
     # Evaluate model
