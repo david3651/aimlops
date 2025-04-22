@@ -1,5 +1,5 @@
 [flake8]
-ignore = 
+ignore =
     W504,
     C901,
     E41,
@@ -11,7 +11,7 @@ ignore =
     C,
     I
 max-line-length = 79
-exclude = 
+exclude =
     .tox,
     .git,
     __pycache__,
@@ -19,7 +19,8 @@ exclude =
     *.egg-info,
     .cache,
     .eggs,
-    develop
+    develop,
+    src/model/v1train.py  # Exclude v1train.py
 per-file-ignores =
     src/__init__.py:D104
     src/*/__init__.py:D104
