@@ -43,17 +43,18 @@ def split_data(df):
     """
     if 'Diabetic' not in df.columns:
         raise RuntimeError("The dataset must contain a 'Diabetic' column.")
-    X = df[
-        ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure', 'TricepsThickness',
-         'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
-    ].values
+    columns = [
+        'Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure', 'TricepsThickness',
+        'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age'
+    ]
+    X = df[columns].values
     y = df['Diabetic'].values
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 def train_model(reg_rate, X_train, X_test, y_train, y_test):
     # Train model
-    model = LogisticRegression(C=1/reg_rate, solver="liblinear")
+    model = LogisticRegression(C=1 / reg_rate, solver="liblinear")
     model.fit(X_train, y_train)
 
     # Evaluate model
