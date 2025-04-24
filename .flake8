@@ -10,7 +10,8 @@ ignore =
     N,
     C,
     I
-max-line-length = 100  # Increase the maximum line length
+
+max-line-length = 100
 exclude =
     .tox,
     .git,
@@ -20,7 +21,7 @@ exclude =
     .cache,
     .eggs,
     develop,
-    src/model/v1train.py  # Exclude v1train.py
+    src/model/v1train.py
 per-file-ignores =
     src/__init__.py:D104
     src/*/__init__.py:D104
