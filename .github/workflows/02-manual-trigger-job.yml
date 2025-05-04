@@ -1,14 +1,16 @@
-name: Manually trigger an Azure Machine Learning job
+name: Train Model in Development and Production
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
-  train:
+  experiment:
+    name: Train Model in Development
     runs-on: ubuntu-latest
+    environment: development
     steps:
     - name: Check out repo
-      uses: actions/checkout@main
+      uses: actions/checkout@v3
 
     - name: Install az ml extension
       run: az extension add -n ml -y
@@ -16,12 +18,39 @@ jobs:
     - name: Azure login
       uses: azure/login@v1
       with:
-        creds: ${{secrets.AZURE_CREDENTIALS}}
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Submit Azure ML Job
+    - name: Train Model in Development
       run: |
         az ml job create --file src/job.yml \
           --resource-group mldemo \
-          --workspace-name mldemows
+          --workspace-name mldemows \
+          --set inputs.data_path=azureml:diabetes-dev-folder@latest \  # Use the development dataset
+          --stream
+
+  production:
+    name: Train Model in Production
+    runs-on: ubuntu-latest
+    environment: production
+    needs: experiment
+    steps:
+    - name: Check out repo
+      uses: actions/checkout@v3
+
+    - name: Install az ml extension
+      run: az extension add -n ml -y
+
+    - name: Azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Train Model in Production
+      run: |
+        az ml job create --file src/job.yml \
+          --resource-group mldemo \
+          --workspace-name mldemows \
+          --set inputs.data_path=azureml:diabetes-prod-folder@latest \  # Use the production dataset
+          --stream
 
 
