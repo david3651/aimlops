@@ -25,7 +25,7 @@ jobs:
         az ml job create --file src/job.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.data_path=azureml:diabetes-dev-folder@latest \
+          --set inputs.training_data=azureml:diabetes-dev-folder@latest \  # Use the development dataset
           --stream
 
   production:
@@ -50,7 +50,7 @@ jobs:
         az ml job create --file src/job.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.data_path=azureml:diabetes-prod-folder@latest \
+          --set inputs.training_data=azureml:diabetes-prod-folder@latest \  # Use the production dataset
           --stream
 
 
