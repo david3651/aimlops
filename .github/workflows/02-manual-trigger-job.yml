@@ -1,7 +1,10 @@
 name: Train Model in Development and Production
 
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  push:
+    branches:
+      - main  # Ensures workflow runs when changes are pushed to main
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   experiment:
@@ -10,47 +13,54 @@ jobs:
     environment: development
     steps:
     - name: Check out repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Checks out the repository code
 
     - name: Install az ml extension
-      run: az extension add -n ml -y
+      run: az extension add -n ml -y  # Installs Azure ML CLI extension
 
     - name: Azure login
-      uses: azure/login@v1
+      uses: azure/login@v1  # Logs into Azure using service principal credentials
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: Train Model in Development
       run: |
+        DATA_PATH="azureml:diabetes-dev-folder@1"
         az ml job create --file src/job.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.data_path=azureml:diabetes-dev-folder@latest \
+          --set inputs.data_path=$DATA_PATH \
           --stream
 
   production:
     name: Train Model in Production
     runs-on: ubuntu-latest
     environment: production
-    needs: experiment
+    needs: experiment  # Ensure experiment job succeeds first
     steps:
     - name: Check out repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Checks out the repository code
 
     - name: Install az ml extension
-      run: az extension add -n ml -y
+      run: az extension add -n ml -y  # Installs Azure ML CLI extension
 
     - name: Azure login
-      uses: azure/login@v1
+      uses: azure/login@v1  # Logs into Azure using service principal credentials
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    - name: Require Approval Before Production
+      run: |
+        echo "Waiting for approval before proceeding with production job..."
+        # Add approval mechanism in environment settings
+
     - name: Train Model in Production
       run: |
+        DATA_PATH="azureml:diabetes-prod-folder@1"
         az ml job create --file src/job.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.data_path=azureml:diabetes-prod-folder@latest \
+          --set inputs.data_path=$DATA_PATH \
           --stream
 
 
