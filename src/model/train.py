@@ -17,6 +17,9 @@ def main(args):
 
     # Start an MLflow run
     with mlflow.start_run():
+        # Debugging: Print the training data path before loading
+        print(f"DEBUG: training_data path received -> {args.training_data}")
+
         # Read data
         df = get_csvs_df(args.training_data)
 
@@ -28,11 +31,17 @@ def main(args):
 
 
 def get_csvs_df(path):
+    # Debugging: Print the path before checking existence
+    print(f"DEBUG: Checking existence of path -> {path}")
+
     if not os.path.exists(path):
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
+
     csv_files = glob.glob(f"{path}/*.csv")
+
     if not csv_files:
         raise RuntimeError(f"No CSV files found in provided data path: {path}")
+
     return pd.concat((pd.read_csv(f) for f in csv_files), sort=False)
 
 
@@ -43,12 +52,14 @@ def split_data(df):
     """
     if 'Diabetic' not in df.columns:
         raise RuntimeError("The dataset must contain a 'Diabetic' column.")
+
     columns = [
         'Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure', 'TricepsThickness',
         'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age'
     ]
     X = df[columns].values
     y = df['Diabetic'].values
+
     return train_test_split(X, y, test_size=0.2, random_state=42)
 
 
@@ -68,7 +79,7 @@ def parse_args():
 
     # Add arguments
     parser.add_argument("--training_data", dest='training_data',
-                        type=str)
+                        type=str, required=True)
     parser.add_argument("--reg_rate", dest='reg_rate',
                         type=float, default=0.01)
 
