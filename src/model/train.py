@@ -34,14 +34,24 @@ def get_csvs_df(path):
     # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
 
-    if not os.path.exists(path):
+    # Check if the path is an AzureML dataset URI
+    if path.startswith("azureml:"):
+        # Azure ML automatically mounts datasets to a specific directory
+        # Replace the dataset URI with the mounted path
+        path = os.path.join("/mnt/batch/tasks/shared/LS_root/mounts", path.split(":")[1])
+        print(f"DEBUG: Resolved AzureML dataset path -> {path}")
+
+    # Check if the path exists
+    if not os.path.isdir(path):
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
 
+    # Find all CSV files in the directory
     csv_files = glob.glob(f"{path}/*.csv")
 
     if not csv_files:
         raise RuntimeError(f"No CSV files found in provided data path: {path}")
 
+    # Read and concatenate all CSV files
     return pd.concat((pd.read_csv(f) for f in csv_files), sort=False)
 
 
