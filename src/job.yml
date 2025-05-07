@@ -4,6 +4,7 @@ command: >-
   python train.py
   --training_data ${{inputs.training_data}}
   --reg_rate ${{inputs.reg_rate}}
+  --verbose
 inputs:
   training_data:
     type: uri_folder
