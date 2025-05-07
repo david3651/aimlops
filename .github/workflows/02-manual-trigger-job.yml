@@ -11,56 +11,62 @@ jobs:
     name: Train Model in Development
     runs-on: ubuntu-latest
     environment: development
+    env:
+      DATA_PATH: "azureml:diabetes-dev-folder@latest"  # Global dataset path for experiment
     steps:
-    - name: Check out repo
-      uses: actions/checkout@v3  # Checks out the repository code
+      - name: Check out repo
+        uses: actions/checkout@v3  # Checks out the repository code
 
-    - name: Install az ml extension
-      run: az extension add -n ml -y  # Installs Azure ML CLI extension
+      - name: Install az ml extension
+        run: az extension add -n ml -y  # Installs Azure ML CLI extension
 
-    - name: Azure login
-      uses: azure/login@v1  # Logs into Azure using service principal credentials
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure login
+        uses: azure/login@v1  # Logs into Azure using service principal credentials
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Train Model in Development
-      run: |
-        DATA_PATH="azureml:diabetes-dev-folder@latest"
-        az ml job create --file src/job.yml \
-          --resource-group mldemo \
-          --workspace-name mldemows \
-          --set inputs.training_data="$DATA_PATH" \
-          --stream
+      - name: Debug Dataset Path
+        run: "echo 'DEBUG: Using dataset path -> $DATA_PATH'"
+
+      - name: Train Model in Development
+        run: |
+          az ml job create --file src/job.yml \
+            --resource-group mldemo \
+            --workspace-name mldemows \
+            --set inputs.training_data="${DATA_PATH}" \
+            --stream
 
   production:
     name: Train Model in Production
     runs-on: ubuntu-latest
     environment: production
     needs: experiment  # Ensure experiment job succeeds first
+    env:
+      DATA_PATH: "azureml:diabetes-prod-folder@latest"  # Global dataset path for production
     steps:
-    - name: Check out repo
-      uses: actions/checkout@v3  # Checks out the repository code
+      - name: Check out repo
+        uses: actions/checkout@v3  # Checks out the repository code
 
-    - name: Install az ml extension
-      run: az extension add -n ml -y  # Installs Azure ML CLI extension
+      - name: Install az ml extension
+        run: az extension add -n ml -y  # Installs Azure ML CLI extension
 
-    - name: Azure login
-      uses: azure/login@v1  # Logs into Azure using service principal credentials
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure login
+        uses: azure/login@v1  # Logs into Azure using service principal credentials
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Require Approval Before Production
-      run: |
-        echo "Waiting for approval before proceeding with production job..."
-        # Add approval mechanism in environment settings
+      - name: Require Approval Before Production
+        run: |
+          echo "Waiting for approval before proceeding with production job..."
+          # Add approval mechanism in environment settings
 
-    - name: Train Model in Production
-      run: |
-        DATA_PATH="azureml:diabetes-prod-folder@latest"
-        az ml job create --file src/job.yml \
-          --resource-group mldemo \
-          --workspace-name mldemows \
-          --set inputs.training_data="$DATA_PATH" \
-          --stream
+      - name: Debug Dataset Path
+        run: "echo 'DEBUG: Using dataset path -> $DATA_PATH'"
 
-
+      - name: Train Model in Production
+        run: |
+          az ml job create --file src/job.yml \
+            --resource-group mldemo \
+            --workspace-name mldemows \
+            --set inputs.training_data="${DATA_PATH}" \
+            --stream
