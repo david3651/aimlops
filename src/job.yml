@@ -2,14 +2,14 @@ $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
 code: model
 command: >-
   python train.py
-  --training_data ${{inputs.training_data}}  # Use dynamically resolved dataset path
+  --training_data ${{inputs.training_data}}
   --reg_rate ${{inputs.reg_rate}}
 inputs:
   training_data:
-    type: uri_folder  # Correct type for dataset paths
-  reg_rate: 0.05  # Updated hyperparameter value
+    type: uri_folder
+  reg_rate: 0.05
 environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
-compute: azureml:cpu-cluster  # Compute name
+compute: azureml:cpu-cluster
 experiment_name: diabetes-classification-experiment
 description: >
   This job trains a logistic regression model on the diabetes dataset using MLflow autologging.

@@ -10,7 +10,7 @@ import mlflow
 import mlflow.sklearn
 
 
-# define functions
+# Define functions
 def main(args):
     # Enable autologging
     mlflow.autolog()
@@ -34,14 +34,29 @@ def get_csvs_df(path):
     # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
 
-    if not os.path.exists(path):
+    # Automatically retrieve the Azure ML dataset mount point
+    mount_point = os.environ.get(
+        "AZUREML_DATASET_MOUNTPOINT",
+        "/mnt/batch/tasks/shared/LS_root/mounts"
+    )
+
+    if path.startswith("azureml:"):
+        dataset_name = path.split(":")[1]
+        path = os.path.join(mount_point, dataset_name)
+        print(f"DEBUG: Resolved AzureML dataset path -> {path}")
+
+    # Ensure the path exists
+    if not os.path.isdir(path):
+        print(f"WARNING: Dataset path '{path}' does not exist. Retrying...")
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
 
+    # Find all CSV files in the directory
     csv_files = glob.glob(f"{path}/*.csv")
 
     if not csv_files:
         raise RuntimeError(f"No CSV files found in provided data path: {path}")
 
+    # Read and concatenate all CSV files
     return pd.concat((pd.read_csv(f) for f in csv_files), sort=False)
 
 
@@ -78,9 +93,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     # Add arguments
-    parser.add_argument("--training_data", dest='training_data',
+    parser.add_argument("--training_data", dest="training_data",
                         type=str, required=True)
-    parser.add_argument("--reg_rate", dest='reg_rate',
+    parser.add_argument("--reg_rate", dest="reg_rate",
                         type=float, default=0.01)
 
     # Parse args
@@ -101,6 +116,13 @@ if __name__ == "__main__":
 
     # Run main function
     main(args)
+
+    # Debugging: Confirm dataset mounting
+    print(f"DEBUG: Listing files in {args.training_data}:")
+    try:
+        print(os.listdir(args.training_data))
+    except Exception as e:
+        print(f"ERROR: Unable to list files in dataset path - {str(e)}")
 
     # Add space in logs
     print("*" * 60)
