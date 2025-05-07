@@ -34,20 +34,16 @@ def get_csvs_df(path):
     # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
 
-    # Automatically retrieve the Azure ML dataset mount point
-    mount_point = os.environ.get(
-        "AZUREML_DATASET_MOUNTPOINT",
-        "/mnt/batch/tasks/shared/LS_root/mounts"
-    )
-
+    # Check if the path is an AzureML dataset URI
     if path.startswith("azureml:"):
-        dataset_name = path.split(":")[1]
-        path = os.path.join(mount_point, dataset_name)
+        # Use the Azure ML environment variable to resolve the mounted path
+        dataset_name = path.split(":")[1].split("@")[0]  # Extract dataset name
+        env_var_name = f"AZUREML_DATAREFERENCE_{dataset_name.upper()}"
+        path = os.environ.get(env_var_name, path)
         print(f"DEBUG: Resolved AzureML dataset path -> {path}")
 
-    # Ensure the path exists
+    # Check if the path exists
     if not os.path.isdir(path):
-        print(f"WARNING: Dataset path '{path}' does not exist. Retrying...")
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
 
     # Find all CSV files in the directory
