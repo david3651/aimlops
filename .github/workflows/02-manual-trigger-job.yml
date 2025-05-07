@@ -29,7 +29,7 @@ jobs:
         az ml job create --file src/job.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.training_data=$DATA_PATH \
+          --set inputs.training_data="$DATA_PATH" \
           --stream
 
   production:
@@ -60,7 +60,7 @@ jobs:
         az ml job create --file src/job.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.training_data=$DATA_PATH \
+          --set inputs.training_data="$DATA_PATH" \
           --stream
 
 
