@@ -10,7 +10,7 @@ import mlflow
 import mlflow.sklearn
 
 
-# Define functions
+# define functions
 def main(args):
     # Enable autologging
     mlflow.autolog()
@@ -31,17 +31,14 @@ def main(args):
 
 
 def get_csvs_df(path):
+    # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
-    if not os.path.isdir(path):
+
+    if not os.path.exists(path):
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
 
-    try:
-        print(f"DEBUG: Listing files in dataset path -> {path}")
-        print(os.listdir(path))
-    except Exception as e:
-        print(f"ERROR: Unable to list files - {str(e)}")
-
     csv_files = glob.glob(f"{path}/*.csv")
+
     if not csv_files:
         raise RuntimeError(f"No CSV files found in provided data path: {path}")
 
@@ -81,9 +78,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     # Add arguments
-    parser.add_argument("--training_data", dest="training_data",
+    parser.add_argument("--training_data", dest='training_data',
                         type=str, required=True)
-    parser.add_argument("--reg_rate", dest="reg_rate",
+    parser.add_argument("--reg_rate", dest='reg_rate',
                         type=float, default=0.01)
 
     # Parse args
