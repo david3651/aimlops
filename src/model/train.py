@@ -31,6 +31,11 @@ def main(args):
 
 
 def get_csvs_df(path):
+    # Debugging: Print environment variables at the start
+    print("DEBUG: Environment variables:")
+    for key, value in os.environ.items():
+        print(f"{key}: {value}")
+
     # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
 
@@ -56,11 +61,6 @@ def get_csvs_df(path):
         print(os.listdir(path))
     except Exception as e:
         print(f"ERROR: Unable to list files - {str(e)}")
-
-    # Debugging: Print environment variables
-    print("DEBUG: Environment variables:")
-    for key, value in os.environ.items():
-        print(f"{key}: {value}")
 
     # Find all CSV files in the directory
     csv_files = glob.glob(f"{path}/*.csv")
