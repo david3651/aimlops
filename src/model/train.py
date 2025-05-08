@@ -35,7 +35,10 @@ def get_csvs_df(path):
     print(f"DEBUG: Checking existence of path -> {path}")
 
     # Automatically retrieve the Azure ML dataset mount point
-    mount_point = os.environ.get("AZUREML_DATASET_MOUNTPOINT", "/mnt/batch/tasks/shared/LS_root/mounts")
+    mount_point = os.environ.get(
+        "AZUREML_DATASET_MOUNTPOINT",
+        "/mnt/batch/tasks/shared/LS_root/mounts"
+    )
 
     if path.startswith("azureml:"):
         dataset_name = path.split(":")[1].split("@")[0]  # Extract dataset name
