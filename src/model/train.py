@@ -57,6 +57,11 @@ def get_csvs_df(path):
     except Exception as e:
         print(f"ERROR: Unable to list files - {str(e)}")
 
+    # Debugging: Print environment variables
+    print("DEBUG: Environment variables:")
+    for key, value in os.environ.items():
+        print(f"{key}: {value}")
+
     # Find all CSV files in the directory
     csv_files = glob.glob(f"{path}/*.csv")
 
