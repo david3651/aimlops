@@ -36,11 +36,16 @@ def get_csvs_df(path):
 
     # Check if the path is an AzureML dataset URI
     if path.startswith("azureml:"):
-        # Use the Azure ML environment variable to resolve the mounted path
+        # Extract dataset name from the AzureML URI
         dataset_name = path.split(":")[1].split("@")[0]  # Extract dataset name
-        env_var_name = f"AZUREML_DATAREFERENCE_{dataset_name.upper()}"
-        path = os.environ.get(env_var_name, path)
-        print(f"DEBUG: Resolved AzureML dataset path -> {path}")
+        env_var_name = f"AZUREML_DATAREFERENCE_{dataset_name.upper()}"  # Environment variable name
+        resolved_path = os.environ.get(env_var_name)  # Get the mounted path from the environment variable
+
+        if resolved_path:
+            path = resolved_path
+            print(f"DEBUG: Resolved AzureML dataset path -> {path}")
+        else:
+            raise RuntimeError(f"Environment variable {env_var_name} not set. Cannot resolve dataset path.")
 
     # Check if the path exists
     if not os.path.isdir(path):
