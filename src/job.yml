@@ -8,7 +8,7 @@ inputs:
   training_data:
     type: uri_folder
   reg_rate: 0.05
-environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
+environment: azureml://registries/azureml/environments/sklearn-1.5/versions/26
 compute: azureml:cpu-cluster
 experiment_name: diabetes-classification-experiment
 description: >
