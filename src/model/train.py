@@ -34,17 +34,28 @@ def get_csvs_df(path):
     # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
 
-    # Check if the path is an AzureML dataset URI
+    # Automatically retrieve the Azure ML dataset mount point
+    mount_point = os.environ.get(
+        "AZUREML_DATASET_MOUNTPOINT",
+        "/mnt/batch/tasks/shared/LS_root/mounts"
+    )
+
     if path.startswith("azureml:"):
-        # Use the Azure ML environment variable to resolve the mounted path
         dataset_name = path.split(":")[1].split("@")[0]  # Extract dataset name
-        env_var_name = f"AZUREML_DATAREFERENCE_{dataset_name.upper()}"
-        path = os.environ.get(env_var_name, path)
+        path = os.path.join(mount_point, dataset_name)
         print(f"DEBUG: Resolved AzureML dataset path -> {path}")
 
-    # Check if the path exists
+    # Ensure the path exists
     if not os.path.isdir(path):
+        print(f"WARNING: Dataset path '{path}' does not exist. Retrying...")
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
+
+    # Debugging: List files in dataset directory
+    try:
+        print(f"DEBUG: Listing files in dataset path -> {path}")
+        print(os.listdir(path))
+    except Exception as e:
+        print(f"ERROR: Unable to list files - {str(e)}")
 
     # Find all CSV files in the directory
     csv_files = glob.glob(f"{path}/*.csv")
@@ -112,13 +123,6 @@ if __name__ == "__main__":
 
     # Run main function
     main(args)
-
-    # Debugging: Confirm dataset mounting
-    print(f"DEBUG: Listing files in {args.training_data}:")
-    try:
-        print(os.listdir(args.training_data))
-    except Exception as e:
-        print(f"ERROR: Unable to list files in dataset path - {str(e)}")
 
     # Add space in logs
     print("*" * 60)
