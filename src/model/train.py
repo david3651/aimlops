@@ -31,27 +31,20 @@ def main(args):
 
 
 def get_csvs_df(path):
-    # Debugging: Print the path before checking existence
     print(f"DEBUG: Checking existence of path -> {path}")
-
-    # Check if the path exists
     if not os.path.isdir(path):
         raise RuntimeError(f"Cannot use non-existent path provided: {path}")
 
-    # Debugging: List files in dataset directory
     try:
         print(f"DEBUG: Listing files in dataset path -> {path}")
         print(os.listdir(path))
     except Exception as e:
         print(f"ERROR: Unable to list files - {str(e)}")
 
-    # Find all CSV files in the directory
     csv_files = glob.glob(f"{path}/*.csv")
-
     if not csv_files:
         raise RuntimeError(f"No CSV files found in provided data path: {path}")
 
-    # Read and concatenate all CSV files
     return pd.concat((pd.read_csv(f) for f in csv_files), sort=False)
 
 
