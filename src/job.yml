@@ -7,9 +7,10 @@ command: >-
 inputs:
   training_data:
     type: uri_folder
-  reg_rate: 0.05
-environment: azureml://registries/azureml/environments/sklearn-1.5/versions/26
-compute: azureml:cpu-cluster
+    path: "azureml:diabetes-dev-folder@latest"
+  reg_rate: 0.05  # Updated hyperparameter value
+environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
+compute: azureml:cpu-cluster  # Compute name
 experiment_name: diabetes-classification-experiment
 description: >
   This job trains a logistic regression model on the diabetes dataset using MLflow autologging.
