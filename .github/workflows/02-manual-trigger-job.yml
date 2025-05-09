@@ -3,62 +3,51 @@ name: Train Model in Development and Production
 on:
   push:
     branches:
-      - main  # Ensures workflow runs when changes are pushed to main
-  workflow_dispatch:  # Allows manual triggering
+      - main  # Trigger workflow on push to main branch
+  workflow_dispatch:  # Allow manual triggering of the workflow
 
 jobs:
-  experiment:
+  train-dev:
     name: Train Model in Development
     runs-on: ubuntu-latest
-    environment: development
     steps:
     - name: Check out repo
-      uses: actions/checkout@v3  # Checks out the repository code
+      uses: actions/checkout@v3  # Check out the repository code
 
-    - name: Install az ml extension
-      run: az extension add -n ml -y  # Installs Azure ML CLI extension
+    - name: Install Azure ML CLI extension
+      run: az extension add -n ml -y  # Install Azure ML CLI extension
 
     - name: Azure login
-      uses: azure/login@v1  # Logs into Azure using service principal credentials
+      uses: azure/login@v1  # Log into Azure using service principal credentials
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Train Model in Development
+    - name: Submit Dev Job
       run: |
-        DATA_PATH="azureml:diabetes-dev-folder@1"
-        az ml job create --file src/job.yml \
+        az ml job create --file src/job-dev.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.data_path=$DATA_PATH \
           --stream
 
-  production:
+  train-prod:
     name: Train Model in Production
     runs-on: ubuntu-latest
-    environment: production
-    needs: experiment  # Ensure experiment job succeeds first
+    needs: train-dev  # Ensure dev job succeeds first
     steps:
     - name: Check out repo
-      uses: actions/checkout@v3  # Checks out the repository code
+      uses: actions/checkout@v3  # Check out the repository code
 
-    - name: Install az ml extension
-      run: az extension add -n ml -y  # Installs Azure ML CLI extension
+    - name: Install Azure ML CLI extension
+      run: az extension add -n ml -y  # Install Azure ML CLI extension
 
     - name: Azure login
-      uses: azure/login@v1  # Logs into Azure using service principal credentials
+      uses: azure/login@v1  # Log into Azure using service principal credentials
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Require Approval Before Production
+    - name: Submit Prod Job
       run: |
-        echo "Waiting for approval before proceeding with production job..."
-        # Add approval mechanism in environment settings
-
-    - name: Train Model in Production
-      run: |
-        DATA_PATH="azureml:diabetes-prod-folder@1"
-        az ml job create --file src/job.yml \
+        az ml job create --file src/job-prod.yml \
           --resource-group mldemo \
           --workspace-name mldemows \
-          --set inputs.data_path=$DATA_PATH \
           --stream
