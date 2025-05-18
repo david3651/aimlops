@@ -27,13 +27,16 @@ jobs:
     - name: Deploy Model to Staging Endpoint
       run: |
         ENDPOINT_NAME="staging-endpoint"
-        # Get the latest model registered by the production experiment
+        # Get the latest completed run for the prod experiment
+        RUN_ID=$(az ml job list --workspace-name mldemows --resource-group mldemo \
+          --query "[?experiment_name=='diabetes-classification-experiment-prod' && status=='Completed'] | [-1].name" -o tsv)
+        # Find the model registered with this run_id as a tag
         MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].name" -o tsv)
+          --query "[?tags.run_id=='$RUN_ID'] | [-1].name" -o tsv)
         MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].version" -o tsv)
+          --query "[?tags.run_id=='$RUN_ID'] | [-1].version" -o tsv)
         if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
-          echo "No model found for experiment diabetes-classification-experiment-prod"
+          echo "No model found for run_id $RUN_ID"
           exit 1
         fi
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
@@ -106,13 +109,16 @@ jobs:
     - name: Deploy Model to Production Endpoint
       run: |
         ENDPOINT_NAME="production-endpoint"
-        # Get the latest model registered by the production experiment
+        # Get the latest completed run for the prod experiment
+        RUN_ID=$(az ml job list --workspace-name mldemows --resource-group mldemo \
+          --query "[?experiment_name=='diabetes-classification-experiment-prod' && status=='Completed'] | [-1].name" -o tsv)
+        # Find the model registered with this run_id as a tag
         MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].name" -o tsv)
+          --query "[?tags.run_id=='$RUN_ID'] | [-1].name" -o tsv)
         MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].version" -o tsv)
+          --query "[?tags.run_id=='$RUN_ID'] | [-1].version" -o tsv)
         if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
-          echo "No model found for experiment diabetes-classification-experiment-prod"
+          echo "No model found for run_id $RUN_ID"
           exit 1
         fi
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
