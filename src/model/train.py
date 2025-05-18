@@ -16,7 +16,7 @@ def main(args):
     mlflow.autolog()
 
     # Start an MLflow run
-    with mlflow.start_run():
+    with mlflow.start_run() as run:
         # Debugging: Print the training data path before loading
         print(f"DEBUG: training_data path received -> {args.training_data}")
 
@@ -26,8 +26,15 @@ def main(args):
         # Split data
         X_train, X_test, y_train, y_test = split_data(df)
 
-        # Train model
-        train_model(args.reg_rate, X_train, X_test, y_train, y_test)
+        # Train model and get model object
+        model = train_model(args.reg_rate, X_train, X_test, y_train, y_test)
+
+        # Explicitly log and register the model
+        mlflow.sklearn.log_model(model, "model")
+        run_id = run.info.run_id
+        # Register the model in Azure ML's model registry
+        mlflow.register_model(f"runs:/{run_id}/model", "diabetes-classification-prod")
+        print(f"Model registered from run {run_id}")
 
 
 def get_csvs_df(path):
@@ -71,6 +78,8 @@ def train_model(reg_rate, X_train, X_test, y_train, y_test):
     # Evaluate model
     accuracy = model.score(X_test, y_test)
     print(f"Model accuracy: {accuracy}")
+
+    return model
 
 
 def parse_args():
