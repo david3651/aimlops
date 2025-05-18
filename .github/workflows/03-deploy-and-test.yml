@@ -7,35 +7,10 @@ on:
       - completed
 
 jobs:
-  register-model:
-    name: Register Model
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:
-    - name: Check out repo
-      uses: actions/checkout@v3
-
-    - name: Install Azure ML CLI extension
-      run: az extension add -n ml -y
-
-    - name: Azure login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - name: Register Model
-      run: |
-        RUN_ID=$(az ml job list --workspace-name mldemows --resource-group mldemo --query "[?status=='Completed'] | [-1].name" -o tsv)
-        az ml model create --name diabetes-model \
-          --path azureml://jobs/$RUN_ID/outputs/artifacts/model \
-          --type mlflow_model \
-          --workspace-name mldemows \
-          --resource-group mldemo
-
   deploy-staging:
     name: Deploy to Staging Endpoint
     runs-on: ubuntu-latest
-    needs: register-model
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: staging
     steps:
     - name: Check out repo
@@ -52,8 +27,15 @@ jobs:
     - name: Deploy Model to Staging Endpoint
       run: |
         ENDPOINT_NAME="staging-endpoint"
-        MODEL_NAME="diabetes-model"
-        MODEL_VERSION=$(az ml model show --name $MODEL_NAME --workspace-name mldemows --resource-group mldemo --query version -o tsv)
+        # Get the latest model registered by the production experiment
+        MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
+          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].name" -o tsv)
+        MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
+          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].version" -o tsv)
+        if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
+          echo "No model found for experiment diabetes-classification-experiment-prod"
+          exit 1
+        fi
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
         az ml online-deployment create --name blue \
           --endpoint $ENDPOINT_NAME \
@@ -124,8 +106,15 @@ jobs:
     - name: Deploy Model to Production Endpoint
       run: |
         ENDPOINT_NAME="production-endpoint"
-        MODEL_NAME="diabetes-model"
-        MODEL_VERSION=$(az ml model show --name $MODEL_NAME --workspace-name mldemows --resource-group mldemo --query version -o tsv)
+        # Get the latest model registered by the production experiment
+        MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
+          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].name" -o tsv)
+        MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
+          --query "[?experiment_name=='diabetes-classification-experiment-prod'] | [-1].version" -o tsv)
+        if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
+          echo "No model found for experiment diabetes-classification-experiment-prod"
+          exit 1
+        fi
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
         az ml online-deployment create --name blue \
           --endpoint $ENDPOINT_NAME \
