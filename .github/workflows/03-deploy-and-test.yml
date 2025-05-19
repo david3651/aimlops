@@ -27,13 +27,11 @@ jobs:
     - name: Deploy Model to Staging Endpoint
       run: |
         ENDPOINT_NAME="staging-endpoint"
-        # Get the latest registered model by creation time
-        MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].name" -o tsv)
-        MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].version" -o tsv)
-        if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
-          echo "No registered model found for diabetes-classification-prod"
+        MODEL_NAME="diabetes-classification-prod"
+        MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo -o table | \
+          awk '$1 == "'$MODEL_NAME'" {print $(NF-1)}' | sort -n | tail -1)
+        if [ -z "$MODEL_VERSION" ]; then
+          echo "No registered model found for $MODEL_NAME"
           exit 1
         fi
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
@@ -106,13 +104,11 @@ jobs:
     - name: Deploy Model to Production Endpoint
       run: |
         ENDPOINT_NAME="production-endpoint"
-        # Get the latest registered model by creation time
-        MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].name" -o tsv)
-        MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].version" -o tsv)
-        if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
-          echo "No registered model found for diabetes-classification-prod"
+        MODEL_NAME="diabetes-classification-prod"
+        MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo -o table | \
+          awk '$1 == "'$MODEL_NAME'" {print $(NF-1)}' | sort -n | tail -1)
+        if [ -z "$MODEL_VERSION" ]; then
+          echo "No registered model found for $MODEL_NAME"
           exit 1
         fi
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
