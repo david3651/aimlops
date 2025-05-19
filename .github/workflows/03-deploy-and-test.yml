@@ -27,11 +27,11 @@ jobs:
     - name: Deploy Model to Staging Endpoint
       run: |
         ENDPOINT_NAME="staging-endpoint"
-        # Get the latest registered model by name only
+        # Get the latest registered model by creation time
         MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &version) | [-1].name" -o tsv)
+          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].name" -o tsv)
         MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &version) | [-1].version" -o tsv)
+          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].version" -o tsv)
         if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
           echo "No registered model found for diabetes-classification-prod"
           exit 1
@@ -106,11 +106,11 @@ jobs:
     - name: Deploy Model to Production Endpoint
       run: |
         ENDPOINT_NAME="production-endpoint"
-        # Get the latest registered model for the experiment by version
+        # Get the latest registered model by creation time
         MODEL_NAME=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod' && experiment_name=='diabetes-classification-experiment-prod'] | sort_by(@, &version) | [-1].name" -o tsv)
+          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].name" -o tsv)
         MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo \
-          --query "[?name=='diabetes-classification-prod' && experiment_name=='diabetes-classification-experiment-prod'] | sort_by(@, &version) | [-1].version" -o tsv)
+          --query "[?name=='diabetes-classification-prod'] | sort_by(@, &creation_context.created_at) | [-1].version" -o tsv)
         if [ -z "$MODEL_NAME" ] || [ -z "$MODEL_VERSION" ]; then
           echo "No registered model found for diabetes-classification-prod"
           exit 1
