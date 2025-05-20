@@ -24,21 +24,24 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Deploy Model to Staging Endpoint
+    - name: Get Latest Model Version
+      id: get-model-version
       run: |
-        ENDPOINT_NAME="staging-endpoint"
         MODEL_NAME="diabetes-classification-prod"
         MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo -o table | \
           awk '$1 == "'$MODEL_NAME'" {print $(NF-1)}' | sort -n | tail -1)
-        if [ -z "$MODEL_VERSION" ]; then
-          echo "No registered model found for $MODEL_NAME"
-          exit 1
-        fi
+        echo "MODEL_VERSION=$MODEL_VERSION" >> $GITHUB_ENV
+
+    - name: Prepare Deployment YAML
+      run: |
+        cp src/deployment-staging.yml deployment-staging.yml
+        sed -i "s/\${MODEL_VERSION}/$MODEL_VERSION/g" deployment-staging.yml
+
+    - name: Deploy Model to Staging Endpoint
+      run: |
+        ENDPOINT_NAME="staging-endpoint"
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
-        az ml online-deployment create --name blue \
-          --endpoint $ENDPOINT_NAME \
-          --model $MODEL_NAME:$MODEL_VERSION \
-          --instance-type Standard_DS3_v2 \
+        az ml online-deployment create --file deployment-staging.yml \
           --workspace-name mldemows \
           --resource-group mldemo
         az ml online-endpoint update --name $ENDPOINT_NAME --traffic blue=100 \
@@ -88,7 +91,7 @@ jobs:
     name: Deploy Model to Production Endpoint
     runs-on: ubuntu-latest
     needs: test-staging
-    environment: production  # This triggers the manual approval
+    environment: production
     steps:
     - name: Check out repo
       uses: actions/checkout@v3
@@ -101,21 +104,24 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Deploy Model to Production Endpoint
+    - name: Get Latest Model Version
+      id: get-model-version
       run: |
-        ENDPOINT_NAME="production-endpoint"
         MODEL_NAME="diabetes-classification-prod"
         MODEL_VERSION=$(az ml model list --workspace-name mldemows --resource-group mldemo -o table | \
           awk '$1 == "'$MODEL_NAME'" {print $(NF-1)}' | sort -n | tail -1)
-        if [ -z "$MODEL_VERSION" ]; then
-          echo "No registered model found for $MODEL_NAME"
-          exit 1
-        fi
+        echo "MODEL_VERSION=$MODEL_VERSION" >> $GITHUB_ENV
+
+    - name: Prepare Deployment YAML
+      run: |
+        cp src/deployment-production.yml deployment-production.yml
+        sed -i "s/\${MODEL_VERSION}/$MODEL_VERSION/g" deployment-production.yml
+
+    - name: Deploy Model to Production Endpoint
+      run: |
+        ENDPOINT_NAME="production-endpoint"
         az ml online-endpoint create --name $ENDPOINT_NAME --workspace-name mldemows --resource-group mldemo || echo "Endpoint already exists"
-        az ml online-deployment create --name blue \
-          --endpoint $ENDPOINT_NAME \
-          --model $MODEL_NAME:$MODEL_VERSION \
-          --instance-type Standard_DS3_v2 \
+        az ml online-deployment create --file deployment-production.yml \
           --workspace-name mldemows \
           --resource-group mldemo
         az ml online-endpoint update --name $ENDPOINT_NAME --traffic blue=100 \
