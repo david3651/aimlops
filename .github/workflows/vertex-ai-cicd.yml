@@ -1,0 +1,180 @@
+name: Vertex AI CI/CD - Train Model (Dev & Prod)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: 'us-central1' # Choose your region
+
+  # Common pipeline settings
+  RAW_DATA_FILE_NAME: 'diabetes.csv' # Assuming your raw data file is named this
+  PIPELINE_ARTIFACTS_GCS_BUCKET: ${{ secrets.GCP_PIPELINE_ARTIFACTS_BUCKET }} # e.g., my-vertex-pipeline-artifacts
+  VERTEX_PIPELINE_SERVICE_ACCOUNT: ${{ secrets.VERTEX_PIPELINE_SA_EMAIL }} # e.g., pipeline-runner@<project-id>.iam.gserviceaccount.com
+
+  # Development pipeline settings
+  DEV_PIPELINE_PYTHON_FILE: 'src/vertex_pipeline_dev.py'
+  DEV_PIPELINE_COMPILED_FILE: 'vertex_pipeline_dev.yaml'
+  DEV_PIPELINE_DISPLAY_NAME: 'mlops-diabetes-pipeline-dev-vertex'
+  DEV_INPUT_DATA_GCS_URI: 'gs://${{ secrets.GCP_DEV_BUCKET }}/raw-data/${{ env.RAW_DATA_FILE_NAME }}' # e.g., gs://my-dev-bucket/raw-data/diabetes.csv
+  DEV_OUTPUT_GCS_BASE_PATH: 'gs://${{ secrets.GCP_DEV_BUCKET }}/pipeline-outputs/dev/' # Base path for processed data, models, metrics
+  DEV_REG_RATE: 0.05
+  DEV_MIN_ACCURACY: 0.70 # Example, adjust as needed
+
+  # Production pipeline settings
+  PROD_PIPELINE_PYTHON_FILE: 'src/vertex_pipeline_prod.py'
+  PROD_PIPELINE_COMPILED_FILE: 'vertex_pipeline_prod.yaml'
+  PROD_PIPELINE_DISPLAY_NAME: 'mlops-diabetes-pipeline-prod-vertex'
+  PROD_INPUT_DATA_GCS_URI: 'gs://${{ secrets.GCP_PROD_BUCKET }}/raw-data/${{ env.RAW_DATA_FILE_NAME }}' # e.g., gs://my-prod-bucket/raw-data/diabetes.csv
+  PROD_OUTPUT_GCS_BASE_PATH: 'gs://${{ secrets.GCP_PROD_BUCKET }}/pipeline-outputs/prod/'
+  PROD_REG_RATE: 0.05 # Consistent with your SageMaker prod pipeline
+  PROD_MIN_ACCURACY: 0.80 # From your SageMaker prod pipeline
+
+jobs:
+  setup-and-compile-gcp:
+    name: Setup GCP & Compile Vertex AI Pipelines
+    runs-on: ubuntu-latest
+    outputs:
+      dev_pipeline_path: ${{ steps.compile.outputs.dev_pipeline_path_abs }}
+      prod_pipeline_path: ${{ steps.compile.outputs.prod_pipeline_path_abs }}
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Required for Workload Identity Federation
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install KFP SDK and Google Cloud AI Platform SDK
+        run: pip install kfp==1.8.22 google-cloud-aiplatform==1.38.1 # Pin versions
+
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WORKLOAD_IDENTITY_POOL_ID }}/providers/${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}'
+          service_account: ${{ secrets.GHA_SERVICE_ACCOUNT_EMAIL }} # SA for GitHub Actions
+
+      - name: Set up Cloud SDK (gcloud)
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Verify GCP Credentials & Enable APIs
+        run: |
+          gcloud auth list
+          gcloud config list project
+          gcloud services enable aiplatform.googleapis.com storage.googleapis.com --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Compile KFP Pipelines
+        id: compile
+        run: |
+          python -m kfp.compiler.main --py "${{ env.DEV_PIPELINE_PYTHON_FILE }}" --output "${{ env.DEV_PIPELINE_COMPILED_FILE }}"
+          python -m kfp.compiler.main --py "${{ env.PROD_PIPELINE_PYTHON_FILE }}" --output "${{ env.PROD_PIPELINE_COMPILED_FILE }}"
+          echo "Compiled pipelines:"
+          ls -l ${{ env.DEV_PIPELINE_COMPILED_FILE }} ${{ env.PROD_PIPELINE_COMPILED_FILE }}
+          echo "dev_pipeline_path_abs=${{ github.workspace }}/${{ env.DEV_PIPELINE_COMPILED_FILE }}" >> $GITHUB_OUTPUT
+          echo "prod_pipeline_path_abs=${{ github.workspace }}/${{ env.PROD_PIPELINE_COMPILED_FILE }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Compiled Pipelines as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-vertex-pipelines
+          path: |
+            ${{ env.DEV_PIPELINE_COMPILED_FILE }}
+            ${{ env.PROD_PIPELINE_COMPILED_FILE }}
+
+  train-dev-vertex:
+    name: Train Model in Vertex AI (Development)
+    runs-on: ubuntu-latest
+    needs: setup-and-compile-gcp
+    environment: development
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WORKLOAD_IDENTITY_POOL_ID }}/providers/${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}'
+          service_account: ${{ secrets.GHA_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up Cloud SDK (gcloud)
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Download Compiled Pipelines Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-vertex-pipelines
+          path: ./compiled-pipelines
+
+      - name: Submit Dev Vertex AI Pipeline Job
+        run: |
+          PIPELINE_JOB_ID="dev-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          gcloud ai pipeline-jobs submit \
+            --pipeline-spec-uri "./compiled-pipelines/${{ env.DEV_PIPELINE_COMPILED_FILE }}" \
+            --location "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --display-name "${{ env.DEV_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
+            --parameter-values "input_raw_data_gcs_uri=${{ env.DEV_INPUT_DATA_GCS_URI }},output_gcs_base_path=${{ env.DEV_OUTPUT_GCS_BASE_PATH }},reg_rate=${{ env.DEV_REG_RATE }},min_accuracy=${{ env.DEV_MIN_ACCURACY }}" \
+            --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
+            --pipeline-root "gs://${{ env.PIPELINE_ARTIFACTS_GCS_BUCKET }}/dev/${PIPELINE_JOB_ID}" \
+            --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=dev" \
+            --enable-caching # Enable caching for dev runs
+
+  require-approval:
+    name: Require Approval Before Production
+    runs-on: ubuntu-latest
+    needs: train-dev-vertex
+    environment: production # This environment should have protection rules in GitHub settings
+    steps:
+      - name: Await Reviewer Approval
+        run: echo "Waiting for approval before proceeding with production Vertex AI job..."
+
+  train-prod-vertex:
+    name: Train Model in Vertex AI (Production)
+    runs-on: ubuntu-latest
+    needs: require-approval
+    environment: production
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v2'
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WORKLOAD_IDENTITY_POOL_ID }}/providers/${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}'
+          service_account: ${{ secrets.GHA_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up Cloud SDK (gcloud)
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Download Compiled Pipelines Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-vertex-pipelines
+          path: ./compiled-pipelines
+
+      - name: Submit Prod Vertex AI Pipeline Job
+        run: |
+          PIPELINE_JOB_ID="prod-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          gcloud ai pipeline-jobs submit \
+            --pipeline-spec-uri "./compiled-pipelines/${{ env.PROD_PIPELINE_COMPILED_FILE }}" \
+            --location "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --display-name "${{ env.PROD_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
+            --parameter-values "input_raw_data_gcs_uri=${{ env.PROD_INPUT_DATA_GCS_URI }},output_gcs_base_path=${{ env.PROD_OUTPUT_GCS_BASE_PATH }},reg_rate=${{ env.PROD_REG_RATE }},min_accuracy=${{ env.PROD_MIN_ACCURACY }}" \
+            --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
+            --pipeline-root "gs://${{ env.PIPELINE_ARTIFACTS_GCS_BUCKET }}/prod/${PIPELINE_JOB_ID}" \
+            --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=prod"
+            # Caching might be disabled or used cautiously for prod

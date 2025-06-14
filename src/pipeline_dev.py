@@ -20,7 +20,7 @@ input_data_s3 = ParameterString(name="InputDataS3", default_value="s3://your-buc
 training_instance_type = ParameterString(name="TrainingInstanceType", default_value="ml.c5.2xlarge")
 reg_rate = ParameterFloat(name="RegRate", default_value=0.05)
 min_accuracy_value = ParameterFloat(name="MinAccuracyValue", default_value=0.80)
-role = "<your-sagemaker-execution-role-arn>"
+role = "arn:aws:iam::799101906606:role/ase-cronos-mlops-sagemaker-execution-role"
 
 # Data processing step
 sk_processor = SKLearnProcessor(framework_version="0.23-1", role=role, instance_type="ml.m5.large", instance_count=1)
