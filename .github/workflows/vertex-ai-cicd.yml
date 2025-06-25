@@ -11,19 +11,21 @@ on:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: 'us-central1' # Choose your region
+  GCP_REGION: 'us-east1' # Updated region
 
-  # Common pipeline settings
+  # Shared MLOps GCS Bucket (NEW - define this secret in GitHub)
+  SHARED_MLOPS_BUCKET_NAME: ${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }} # e.g., acme-cronos-mlops-data
   RAW_DATA_FILE_NAME: 'diabetes.csv' # Assuming your raw data file is named this
-  PIPELINE_ARTIFACTS_GCS_BUCKET: ${{ secrets.GCP_PIPELINE_ARTIFACTS_BUCKET }} # e.g., my-vertex-pipeline-artifacts
+  # Base GCS path for Vertex AI pipeline execution artifacts (runs, logs, intermediate data)
+  PIPELINE_RUNS_GCS_ROOT_BASE: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/pipeline-runs' # Changed from separate bucket
   VERTEX_PIPELINE_SERVICE_ACCOUNT: ${{ secrets.VERTEX_PIPELINE_SA_EMAIL }} # e.g., pipeline-runner@<project-id>.iam.gserviceaccount.com
 
   # Development pipeline settings
   DEV_PIPELINE_PYTHON_FILE: 'src/vertex_pipeline_dev.py'
   DEV_PIPELINE_COMPILED_FILE: 'vertex_pipeline_dev.yaml'
   DEV_PIPELINE_DISPLAY_NAME: 'mlops-diabetes-pipeline-dev-vertex'
-  DEV_INPUT_DATA_GCS_URI: 'gs://${{ secrets.GCP_DEV_BUCKET }}/raw-data/${{ env.RAW_DATA_FILE_NAME }}' # e.g., gs://my-dev-bucket/raw-data/diabetes.csv
-  DEV_OUTPUT_GCS_BASE_PATH: 'gs://${{ secrets.GCP_DEV_BUCKET }}/pipeline-outputs/dev/' # Base path for processed data, models, metrics
+  DEV_INPUT_DATA_GCS_URI: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/dev/raw/${{ env.RAW_DATA_FILE_NAME }}'
+  DEV_OUTPUT_GCS_BASE_PATH: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/dev/outputs/' # For KFP components if they write final outputs explicitly
   DEV_REG_RATE: 0.05
   DEV_MIN_ACCURACY: 0.70 # Example, adjust as needed
 
@@ -31,8 +33,8 @@ env:
   PROD_PIPELINE_PYTHON_FILE: 'src/vertex_pipeline_prod.py'
   PROD_PIPELINE_COMPILED_FILE: 'vertex_pipeline_prod.yaml'
   PROD_PIPELINE_DISPLAY_NAME: 'mlops-diabetes-pipeline-prod-vertex'
-  PROD_INPUT_DATA_GCS_URI: 'gs://${{ secrets.GCP_PROD_BUCKET }}/raw-data/${{ env.RAW_DATA_FILE_NAME }}' # e.g., gs://my-prod-bucket/raw-data/diabetes.csv
-  PROD_OUTPUT_GCS_BASE_PATH: 'gs://${{ secrets.GCP_PROD_BUCKET }}/pipeline-outputs/prod/'
+  PROD_INPUT_DATA_GCS_URI: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/prod/raw/${{ env.RAW_DATA_FILE_NAME }}'
+  PROD_OUTPUT_GCS_BASE_PATH: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/prod/outputs/' # For KFP components if they write final outputs explicitly
   PROD_REG_RATE: 0.05 # Consistent with your SageMaker prod pipeline
   PROD_MIN_ACCURACY: 0.80 # From your SageMaker prod pipeline
 
@@ -56,7 +58,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install KFP SDK and Google Cloud AI Platform SDK
-        run: pip install kfp==1.8.22 google-cloud-aiplatform==1.38.1 # Pin versions
+        run: pip install kfp==2.7.0 google-cloud-aiplatform==1.38.1 # Pin versions to use KFP v2
 
       - name: Authenticate to Google Cloud
         uses: 'google-github-actions/auth@v2'
@@ -77,8 +79,8 @@ jobs:
       - name: Compile KFP Pipelines
         id: compile
         run: |
-          python -m kfp.compiler.main --py "${{ env.DEV_PIPELINE_PYTHON_FILE }}" --output "${{ env.DEV_PIPELINE_COMPILED_FILE }}"
-          python -m kfp.compiler.main --py "${{ env.PROD_PIPELINE_PYTHON_FILE }}" --output "${{ env.PROD_PIPELINE_COMPILED_FILE }}"
+          python src/compiler.py --py "${{ env.DEV_PIPELINE_PYTHON_FILE }}" --output "${{ env.DEV_PIPELINE_COMPILED_FILE }}"
+          python src/compiler.py --py "${{ env.PROD_PIPELINE_PYTHON_FILE }}" --output "${{ env.PROD_PIPELINE_COMPILED_FILE }}"
           echo "Compiled pipelines:"
           ls -l ${{ env.DEV_PIPELINE_COMPILED_FILE }} ${{ env.PROD_PIPELINE_COMPILED_FILE }}
           echo "dev_pipeline_path_abs=${{ github.workspace }}/${{ env.DEV_PIPELINE_COMPILED_FILE }}" >> $GITHUB_OUTPUT
@@ -125,9 +127,9 @@ jobs:
             --location "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --display-name "${{ env.DEV_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
-            --parameter-values "input_raw_data_gcs_uri=${{ env.DEV_INPUT_DATA_GCS_URI }},output_gcs_base_path=${{ env.DEV_OUTPUT_GCS_BASE_PATH }},reg_rate=${{ env.DEV_REG_RATE }},min_accuracy=${{ env.DEV_MIN_ACCURACY }}" \
+            --parameter-values "input_raw_data_gcs_uri=${{ env.DEV_INPUT_DATA_GCS_URI }},reg_rate=${{ env.DEV_REG_RATE }},min_accuracy=${{ env.DEV_MIN_ACCURACY }}" \
             --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
-            --pipeline-root "gs://${{ env.PIPELINE_ARTIFACTS_GCS_BUCKET }}/dev/${PIPELINE_JOB_ID}" \
+            --pipeline-root "${{ env.PIPELINE_RUNS_GCS_ROOT_BASE }}/dev/${PIPELINE_JOB_ID}" \
             --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=dev" \
             --enable-caching # Enable caching for dev runs
 
@@ -173,8 +175,8 @@ jobs:
             --location "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --display-name "${{ env.PROD_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
-            --parameter-values "input_raw_data_gcs_uri=${{ env.PROD_INPUT_DATA_GCS_URI }},output_gcs_base_path=${{ env.PROD_OUTPUT_GCS_BASE_PATH }},reg_rate=${{ env.PROD_REG_RATE }},min_accuracy=${{ env.PROD_MIN_ACCURACY }}" \
+            --parameter-values "input_raw_data_gcs_uri=${{ env.PROD_INPUT_DATA_GCS_URI }},reg_rate=${{ env.PROD_REG_RATE }},min_accuracy=${{ env.PROD_MIN_ACCURACY }}" \
             --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
-            --pipeline-root "gs://${{ env.PIPELINE_ARTIFACTS_GCS_BUCKET }}/prod/${PIPELINE_JOB_ID}" \
+            --pipeline-root "${{ env.PIPELINE_RUNS_GCS_ROOT_BASE }}/prod/${PIPELINE_JOB_ID}" \
             --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=prod"
             # Caching might be disabled or used cautiously for prod

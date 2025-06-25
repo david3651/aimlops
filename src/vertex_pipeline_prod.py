@@ -5,9 +5,8 @@ Vertex AI KFP Pipeline for Production
 - Evaluates the model.
 - Conditionally proceeds based on accuracy for production.
 """
-
-from kfp import dsl
-from kfp.dsl import OutputPath, InputPath
+from kfp.v2 import dsl
+from kfp.v2.dsl import component, pipeline, Input, Output, Dataset, Model, Metrics
 
 PIPELINE_NAME = "mlops-diabetes-prod-pipeline"
 PIPELINE_DESCRIPTION = "Production pipeline for diabetes prediction model on Vertex AI"
@@ -19,17 +18,14 @@ GCS_PACKAGE_REQUIREMENTS = [
     "joblib==1.2.0"
 ]
 
-# Re-using component definitions from dev or define them identically.
-# For a real-world scenario, you might import these from a shared components library.
-
-@dsl.component(
+@component(
     base_image="python:3.9",
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def preprocess_data_op(
-    input_gcs_uri: str,
-    output_train_path: OutputPath("Dataset"),
-    output_test_path: OutputPath("Dataset")
+    input_gcs_uri: str,  # GCS URI to the raw diabetes.csv
+    output_train_data: Output[Dataset],
+    output_test_data: Output[Dataset]
 ):
     """Loads raw data, splits into train/test, and saves to GCS."""
     import pandas as pd
@@ -58,19 +54,18 @@ def preprocess_data_op(
     train_data = df.sample(frac=0.8, random_state=42) # Consistent split
     test_data = df.drop(train_data.index)
 
-    train_data.to_csv(output_train_path, index=False)
-    test_data.to_csv(output_test_path, index=False)
-    logging.info(f"[PROD] Train data saved to {output_train_path}")
-    logging.info(f"[PROD] Test data saved to {output_test_path}")
+    train_data.to_csv(output_train_data.path, index=False)
+    test_data.to_csv(output_test_data.path, index=False)
+    logging.info(f"[PROD] Train data saved to {output_train_data.path}")
+    logging.info(f"[PROD] Test data saved to {output_test_data.path}")
 
-
-@dsl.component(
+@component(
     base_image="python:3.9",
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def train_model_op(
-    train_data_path: InputPath("Dataset"),
-    output_model_path: OutputPath("Model"),
+    train_data: Input[Dataset], # Updated from InputPath("Dataset")
+    output_model: Output[Model], # Updated from OutputPath("Model")
     reg_rate: float
 ):
     """Trains a logistic regression model and saves it."""
@@ -83,28 +78,28 @@ def train_model_op(
     logging.basicConfig(level=logging.INFO)
     logging.info(f"[PROD] Training model with reg_rate: {reg_rate}")
 
-    train_data = pd.read_csv(train_data_path)
+    train_df = pd.read_csv(train_data.path) # Access path via .path
 
     columns = ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure',
                'TricepsThickness', 'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
-    X_train = train_data[columns]
-    y_train = train_data['Diabetic']
+    X_train = train_df[columns]
+    y_train = train_df['Diabetic']
 
     model = LogisticRegression(C=1 / reg_rate, solver="liblinear")
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train.values.ravel()) # .values.ravel() for sklearn warning
 
-    joblib.dump(model, output_model_path)
-    logging.info(f"[PROD] Model trained and saved to {output_model_path}")
+    joblib.dump(model, output_model.path) # Access path via .path
+    logging.info(f"[PROD] Model trained and saved to {output_model.path}") # Access path via .path
 
-
-@dsl.component(
+@component(
     base_image="python:3.9",
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def evaluate_model_op(
-    model_path: InputPath("Model"),
-    test_data_path: InputPath("Dataset"),
-    metrics_path: OutputPath("Metrics")
+    test_data: Input[Dataset], # Updated from InputPath("Dataset")
+    model: Input[Model],       # Updated from InputPath("Model")
+    metrics: Output[Metrics],  # Updated from OutputPath("Metrics")
+    min_accuracy: float
 ) -> float: # Returns accuracy
     """Evaluates the model and returns accuracy."""
     import pandas as pd
@@ -115,53 +110,48 @@ def evaluate_model_op(
     import os
 
     logging.basicConfig(level=logging.INFO)
-    logging.info(f"[PROD] Evaluating model from {model_path}")
+    logging.info(f"[PROD] Evaluating model from {model.path}") # Access path via .path
 
-    model = joblib.load(model_path)
-    test_data = pd.read_csv(test_data_path)
+    model_artifact = joblib.load(model.path) # Access path via .path
+    test_df = pd.read_csv(test_data.path)   # Access path via .path
 
     columns = ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure',
                'TricepsThickness', 'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
-    X_test = test_data[columns]
-    y_test = test_data['Diabetic']
+    X_test = test_df[columns]
+    y_test = test_df['Diabetic']
 
-    y_pred = model.predict(X_test)
+    y_pred = model_artifact.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
-    metrics_data = {"accuracy": accuracy}
-    with open(metrics_path, "w") as f:
-        json.dump(metrics_data, f)
-
+    metrics.log_metric("accuracy", accuracy)  # KFP v2 way to log metrics
+    metrics.log_metric("min_accuracy_threshold", min_accuracy)  # KFP v2 way to log metrics
     logging.info(f"[PROD] Model accuracy: {accuracy}")
-    logging.info(f"[PROD] Evaluation metrics saved to {metrics_path}")
+    logging.info(f"[PROD] Evaluation metrics saved to {metrics.path}")  # Access path via .path
     return accuracy
 
-@dsl.component(
+@component(
     base_image="python:3.9",
 )
-def model_approved_op(model_accuracy: float, model_path: InputPath("Model")):
+def model_approved_op(model_accuracy: float, model: Input[Model]):  # Updated from InputPath("Model")
     import logging
     logging.basicConfig(level=logging.INFO)
-    logging.info(f"[PROD] Model at {model_path} approved with accuracy: {model_accuracy}. Ready for production deployment processes.")
+    logging.info(f"[PROD] Model at {model.uri} approved with accuracy: {model_accuracy}. Ready for production deployment processes.")  # Access URI via .uri
 
-@dsl.component(
+@component(
     base_image="python:3.9",
 )
 def model_rejected_op(model_accuracy: float, min_accuracy: float):
     import logging
     logging.basicConfig(level=logging.INFO)
     logging.error(f"[PROD] Model REJECTED. Accuracy {model_accuracy} is below threshold {min_accuracy}. Halting production deployment.")
-    # Consider raising an exception to fail the pipeline explicitly
-    # import sys
-    # sys.exit(1)
+    raise ValueError(f"Model REJECTED. Accuracy {model_accuracy} is below threshold {min_accuracy}.")  # Explicitly raise error
 
-@dsl.pipeline(
+@pipeline(
     name=PIPELINE_NAME,
     description=PIPELINE_DESCRIPTION
 )
 def prod_diabetes_pipeline(
-    input_raw_data_gcs_uri: str, # e.g., gs://your-prod-bucket/raw-data/diabetes.csv
-    output_gcs_base_path: str,   # e.g., gs://your-prod-bucket/pipeline-outputs/prod/
+    input_raw_data_gcs_uri: str,
     reg_rate: float = 0.05,      # Consistent with SageMaker prod
     min_accuracy: float = 0.80   # From SageMaker prod pipeline
 ):
@@ -170,22 +160,23 @@ def prod_diabetes_pipeline(
     )
 
     train_task = train_model_op(
-        train_data_path=preprocess_task.outputs["output_train_path"],
+        train_data=preprocess_task.outputs["output_train_data"], # Access output by key
         reg_rate=reg_rate
     )
 
     evaluate_task = evaluate_model_op(
-        model_path=train_task.outputs["output_model_path"],
-        test_data_path=preprocess_task.outputs["output_test_path"]
+        model=train_task.outputs["output_model"], # Access output by key
+        test_data=preprocess_task.outputs["output_test_data"], # Access output by key
+        min_accuracy=min_accuracy
     )
 
-    with dsl.Condition(evaluate_task.output >= min_accuracy, name="prod-accuracy-check"):
+    with dsl.Condition(evaluate_task.outputs["accuracy"] >= min_accuracy, name="prod-accuracy-check"): # Access output by key
         model_approved_op(
-            model_accuracy=evaluate_task.output,
-            model_path=train_task.outputs["output_model_path"]
+            model_accuracy=evaluate_task.outputs["accuracy"], # Access output by key
+            model=train_task.outputs["output_model"] # Access output by key
         )
-    with dsl.Condition(evaluate_task.output < min_accuracy, name="prod-accuracy-too-low"):
+    with dsl.Condition(evaluate_task.outputs["accuracy"] < min_accuracy, name="prod-accuracy-too-low"): # Access output by key
         model_rejected_op(
-            model_accuracy=evaluate_task.output,
+            model_accuracy=evaluate_task.outputs["accuracy"], # Access output by key
             min_accuracy=min_accuracy
         )
