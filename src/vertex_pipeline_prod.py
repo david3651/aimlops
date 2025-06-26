@@ -29,7 +29,6 @@ def preprocess_data_op(
     output_train_data: Output[Dataset],
     output_test_data: Output[Dataset]
 ):
-    """Loads raw data, splits into train/test, and saves to GCS."""
     import pandas as pd
     from google.cloud import storage
     from urllib.parse import urlparse
@@ -53,7 +52,7 @@ def preprocess_data_op(
 
     df = pd.read_csv(local_raw_data_file)
 
-    train_data = df.sample(frac=0.8, random_state=42) # Consistent split
+    train_data = df.sample(frac=0.8, random_state=42)
     test_data = df.drop(train_data.index)
 
     train_data.to_csv(output_train_data.path, index=False)
@@ -66,21 +65,19 @@ def preprocess_data_op(
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def train_model_op(
-    train_data: Input[Dataset],  # Updated from InputPath("Dataset")
-    output_model: Output[Model],  # Updated from OutputPath("Model")
+    train_data: Input[Dataset],
+    output_model: Output[Model],
     reg_rate: float
 ):
-    """Trains a logistic regression model and saves it."""
     import pandas as pd
     import joblib
     from sklearn.linear_model import LogisticRegression
     import logging
-    import os
 
     logging.basicConfig(level=logging.INFO)
     logging.info(f"[PROD] Training model with reg_rate: {reg_rate}")
 
-    train_df = pd.read_csv(train_data.path) # Access path via .path
+    train_df = pd.read_csv(train_data.path)
 
     columns = ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure',
                'TricepsThickness', 'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
@@ -88,33 +85,31 @@ def train_model_op(
     y_train = train_df['Diabetic']
 
     model = LogisticRegression(C=1 / reg_rate, solver="liblinear")
-    model.fit(X_train, y_train.values.ravel()) # .values.ravel() for sklearn warning
+    model.fit(X_train, y_train.values.ravel())
 
-    joblib.dump(model, output_model.path) # Access path via .path
-    logging.info(f"[PROD] Model trained and saved to {output_model.path}") # Access path via .path
+    joblib.dump(model, output_model.path)
+    logging.info(f"[PROD] Model trained and saved to {output_model.path}")
 
 @component(
     base_image="python:3.9",
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def evaluate_model_op(
-    test_data: Input[Dataset], # Updated from InputPath("Dataset")
-    model: Input[Model],       # Updated from InputPath("Model")
-    metrics: Output[Metrics],  # Updated from OutputPath("Metrics")
+    test_data: Input[Dataset],
+    model: Input[Model],
+    metrics: Output[Metrics],
     min_accuracy: float
-) -> float: # Returns accuracy
-    """Evaluates the model and returns accuracy."""
+) -> float:
     import pandas as pd
     import joblib
     from sklearn.metrics import accuracy_score
     import logging
-    import os
 
     logging.basicConfig(level=logging.INFO)
-    logging.info(f"[PROD] Evaluating model from {model.path}") # Access path via .path
+    logging.info(f"[PROD] Evaluating model from {model.path}")
 
-    model_artifact = joblib.load(model.path) # Access path via .path
-    test_df = pd.read_csv(test_data.path)   # Access path via .path
+    model_artifact = joblib.load(model.path)
+    test_df = pd.read_csv(test_data.path)
 
     columns = ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure',
                'TricepsThickness', 'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
@@ -124,10 +119,10 @@ def evaluate_model_op(
     y_pred = model_artifact.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
-    metrics.log_metric("accuracy", accuracy)  # KFP v2 way to log metrics
-    metrics.log_metric("min_accuracy_threshold", min_accuracy)  # KFP v2 way to log metrics
+    metrics.log_metric("accuracy", accuracy)
+    metrics.log_metric("min_accuracy_threshold", min_accuracy)
     logging.info(f"[PROD] Model accuracy: {accuracy}")
-    logging.info(f"[PROD] Evaluation metrics saved to {metrics.path}")  # Access path via .path
+    logging.info(f"[PROD] Evaluation metrics saved to {metrics.path}")
     return accuracy
 
 @component(
@@ -178,7 +173,7 @@ def model_rejected_op(model_accuracy: float, min_accuracy: float):
     import logging
     logging.basicConfig(level=logging.INFO)
     logging.error(f"[PROD] Model REJECTED. Accuracy {model_accuracy} is below threshold {min_accuracy}. Halting production deployment.")
-    raise ValueError(f"Model REJECTED. Accuracy {model_accuracy} is below threshold {min_accuracy}.")  # Explicitly raise error
+    raise ValueError(f"Model REJECTED. Accuracy {model_accuracy} is below threshold {min_accuracy}.")
 
 @pipeline(
     name=PIPELINE_NAME,
@@ -197,20 +192,20 @@ def prod_diabetes_pipeline(
     )
 
     train_task = train_model_op(
-        train_data=preprocess_task.outputs["output_train_data"], # Access output by key
+        train_data=preprocess_task.outputs["output_train_data"],
         reg_rate=reg_rate
     )
 
     evaluate_task = evaluate_model_op(
-        model=train_task.outputs["output_model"], # Access output by key
-        test_data=preprocess_task.outputs["output_test_data"], # Access output by key
+        model=train_task.outputs["output_model"],
+        test_data=preprocess_task.outputs["output_test_data"],
         min_accuracy=min_accuracy
     )
 
-    with dsl.Condition(evaluate_task.outputs["accuracy"] >= min_accuracy, name="prod-accuracy-check"): # Access output by key
+    with dsl.Condition(evaluate_task.outputs["accuracy"] >= min_accuracy, name="prod-accuracy-check"):
         model_approved_op_task = model_approved_op(
-            model_accuracy=evaluate_task.outputs["accuracy"],  # Access output by key
-            model=train_task.outputs["output_model"]  # Access output by key
+            model_accuracy=evaluate_task.outputs["accuracy"],
+            model=train_task.outputs["output_model"]
         )
         register_task = register_model_op(
             project_id=project_id,
@@ -218,8 +213,9 @@ def prod_diabetes_pipeline(
             model_display_name=model_display_name,
             model_artifact=train_task.outputs["output_model"]
         ).after(model_approved_op_task)
-    with dsl.Condition(evaluate_task.outputs["accuracy"] < min_accuracy, name="prod-accuracy-too-low"):  # Access output by key
+
+    with dsl.Condition(evaluate_task.outputs["accuracy"] < min_accuracy, name="prod-accuracy-too-low"):
         model_rejected_op(
-            model_accuracy=evaluate_task.outputs["accuracy"],  # Access output by key
+            model_accuracy=evaluate_task.outputs["accuracy"],
             min_accuracy=min_accuracy
         )
