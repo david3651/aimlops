@@ -4,6 +4,7 @@ Vertex AI KFP Pipeline for Production
 - Trains a model.
 - Evaluates the model.
 - Conditionally proceeds based on accuracy for production.
+- Registers the model in Vertex AI Model Registry if approved.
 """
 from kfp.v2 import dsl
 from kfp.v2.dsl import component, pipeline, Input, Output, Dataset, Model, Metrics
@@ -14,8 +15,9 @@ PIPELINE_DESCRIPTION = "Production pipeline for diabetes prediction model on Ver
 GCS_PACKAGE_REQUIREMENTS = [
     "google-cloud-storage==2.10.0",
     "pandas==1.5.3",
-    "scikit-learn==1.2.2", # Match version from SageMaker if possible, or update
-    "joblib==1.2.0"
+    "scikit-learn==1.2.2",  # Match version from SageMaker if possible, or update
+    "joblib==1.2.0",
+    "google-cloud-aiplatform==1.38.1"  # Added for Vertex AI Model Registry
 ]
 
 @component(
@@ -23,7 +25,7 @@ GCS_PACKAGE_REQUIREMENTS = [
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def preprocess_data_op(
-    input_gcs_uri: str,  # GCS URI to the raw diabetes.csv
+    input_gcs_uri: str,
     output_train_data: Output[Dataset],
     output_test_data: Output[Dataset]
 ):
@@ -64,8 +66,8 @@ def preprocess_data_op(
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def train_model_op(
-    train_data: Input[Dataset], # Updated from InputPath("Dataset")
-    output_model: Output[Model], # Updated from OutputPath("Model")
+    train_data: Input[Dataset],  # Updated from InputPath("Dataset")
+    output_model: Output[Model],  # Updated from OutputPath("Model")
     reg_rate: float
 ):
     """Trains a logistic regression model and saves it."""
@@ -105,7 +107,6 @@ def evaluate_model_op(
     import pandas as pd
     import joblib
     from sklearn.metrics import accuracy_score
-    import json
     import logging
     import os
 
@@ -132,10 +133,43 @@ def evaluate_model_op(
 @component(
     base_image="python:3.9",
 )
-def model_approved_op(model_accuracy: float, model: Input[Model]):  # Updated from InputPath("Model")
+def model_approved_op(model_accuracy: float, model: Input[Model]):
+    """Component to signify model approval."""
     import logging
     logging.basicConfig(level=logging.INFO)
-    logging.info(f"[PROD] Model at {model.uri} approved with accuracy: {model_accuracy}. Ready for production deployment processes.")  # Access URI via .uri
+    logging.info(f"[PROD] Model at {model.uri} approved with accuracy: {model_accuracy}. Ready for production deployment processes.")
+    logging.info("[PROD] Model accuracy meets the threshold. Proceeding with registration.")
+
+@component(
+    base_image="python:3.9",
+    packages_to_install=GCS_PACKAGE_REQUIREMENTS,
+)
+def register_model_op(
+    project_id: str,
+    region: str,
+    model_display_name: str,
+    model_artifact: Input[Model],
+    registered_model: Output[Model]
+):
+    """Uploads the model to Vertex AI Model Registry."""
+    from google.cloud import aiplatform
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    aiplatform.init(project=project_id, location=region)
+    logging.info(f"[PROD] Registering model '{model_display_name}' from {model_artifact.uri}")
+
+    artifact_dir = model_artifact.uri.rsplit('/', 1)[0]
+
+    model = aiplatform.Model.upload(
+        display_name=model_display_name,
+        artifact_uri=artifact_dir,
+        serving_container_image_uri="us-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-2:latest",
+        sync=True
+    )
+
+    registered_model.uri = model.resource_name
+    logging.info(f"[PROD] Model registered: {model.resource_name}")
 
 @component(
     base_image="python:3.9",
@@ -151,9 +185,12 @@ def model_rejected_op(model_accuracy: float, min_accuracy: float):
     description=PIPELINE_DESCRIPTION
 )
 def prod_diabetes_pipeline(
+    project_id: str,
+    region: str,
+    model_display_name: str,
     input_raw_data_gcs_uri: str,
-    reg_rate: float = 0.05,      # Consistent with SageMaker prod
-    min_accuracy: float = 0.80   # From SageMaker prod pipeline
+    reg_rate: float = 0.05,
+    min_accuracy: float = 0.80
 ):
     preprocess_task = preprocess_data_op(
         input_gcs_uri=input_raw_data_gcs_uri
@@ -171,12 +208,18 @@ def prod_diabetes_pipeline(
     )
 
     with dsl.Condition(evaluate_task.outputs["accuracy"] >= min_accuracy, name="prod-accuracy-check"): # Access output by key
-        model_approved_op(
-            model_accuracy=evaluate_task.outputs["accuracy"], # Access output by key
-            model=train_task.outputs["output_model"] # Access output by key
+        model_approved_op_task = model_approved_op(
+            model_accuracy=evaluate_task.outputs["accuracy"],  # Access output by key
+            model=train_task.outputs["output_model"]  # Access output by key
         )
-    with dsl.Condition(evaluate_task.outputs["accuracy"] < min_accuracy, name="prod-accuracy-too-low"): # Access output by key
+        register_task = register_model_op(
+            project_id=project_id,
+            region=region,
+            model_display_name=model_display_name,
+            model_artifact=train_task.outputs["output_model"]
+        ).after(model_approved_op_task)
+    with dsl.Condition(evaluate_task.outputs["accuracy"] < min_accuracy, name="prod-accuracy-too-low"):  # Access output by key
         model_rejected_op(
-            model_accuracy=evaluate_task.outputs["accuracy"], # Access output by key
+            model_accuracy=evaluate_task.outputs["accuracy"],  # Access output by key
             min_accuracy=min_accuracy
         )

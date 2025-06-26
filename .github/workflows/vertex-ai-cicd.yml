@@ -11,32 +11,30 @@ on:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: 'us-east1' # Updated region
-
-  # Shared MLOps GCS Bucket (NEW - define this secret in GitHub)
-  SHARED_MLOPS_BUCKET_NAME: ${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }} # e.g., acme-cronos-mlops-data
-  RAW_DATA_FILE_NAME: 'diabetes.csv' # Assuming your raw data file is named this
-  # Base GCS path for Vertex AI pipeline execution artifacts (runs, logs, intermediate data)
-  PIPELINE_RUNS_GCS_ROOT_BASE: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/pipeline-runs' # Changed from separate bucket
-  VERTEX_PIPELINE_SERVICE_ACCOUNT: ${{ secrets.VERTEX_PIPELINE_SA_EMAIL }} # e.g., pipeline-runner@<project-id>.iam.gserviceaccount.com
+  GCP_REGION: 'us-east1'
+  MODEL_DISPLAY_NAME: 'diabetes-prediction-model'
+  SHARED_MLOPS_BUCKET_NAME: ${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }}
+  RAW_DATA_FILE_NAME: 'diabetes.csv'
+  PIPELINE_RUNS_GCS_ROOT_BASE: 'gs://${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }}/pipeline-runs'
+  VERTEX_PIPELINE_SERVICE_ACCOUNT: ${{ secrets.VERTEX_PIPELINE_SA_EMAIL }}
 
   # Development pipeline settings
   DEV_PIPELINE_PYTHON_FILE: 'src/vertex_pipeline_dev.py'
   DEV_PIPELINE_COMPILED_FILE: 'vertex_pipeline_dev.yaml'
   DEV_PIPELINE_DISPLAY_NAME: 'mlops-diabetes-pipeline-dev-vertex'
-  DEV_INPUT_DATA_GCS_URI: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/dev/raw/${{ env.RAW_DATA_FILE_NAME }}'
-  DEV_OUTPUT_GCS_BASE_PATH: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/dev/outputs/' # For KFP components if they write final outputs explicitly
+  DEV_INPUT_DATA_GCS_URI: 'gs://${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }}/dev/raw/diabetes.csv'
+  DEV_OUTPUT_GCS_BASE_PATH: 'gs://${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }}/dev/outputs/'
   DEV_REG_RATE: 0.05
-  DEV_MIN_ACCURACY: 0.70 # Example, adjust as needed
+  DEV_MIN_ACCURACY: 0.70
 
   # Production pipeline settings
   PROD_PIPELINE_PYTHON_FILE: 'src/vertex_pipeline_prod.py'
   PROD_PIPELINE_COMPILED_FILE: 'vertex_pipeline_prod.yaml'
   PROD_PIPELINE_DISPLAY_NAME: 'mlops-diabetes-pipeline-prod-vertex'
-  PROD_INPUT_DATA_GCS_URI: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/prod/raw/${{ env.RAW_DATA_FILE_NAME }}'
-  PROD_OUTPUT_GCS_BASE_PATH: 'gs://${{ env.SHARED_MLOPS_BUCKET_NAME }}/prod/outputs/' # For KFP components if they write final outputs explicitly
-  PROD_REG_RATE: 0.05 # Consistent with your SageMaker prod pipeline
-  PROD_MIN_ACCURACY: 0.80 # From your SageMaker prod pipeline
+  PROD_INPUT_DATA_GCS_URI: 'gs://${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }}/prod/raw/diabetes.csv'
+  PROD_OUTPUT_GCS_BASE_PATH: 'gs://${{ secrets.GCP_SHARED_MLOPS_BUCKET_NAME }}/prod/outputs/'
+  PROD_REG_RATE: 0.05
+  PROD_MIN_ACCURACY: 0.80
 
 jobs:
   setup-and-compile-gcp:
@@ -47,7 +45,7 @@ jobs:
       prod_pipeline_path: ${{ steps.compile.outputs.prod_pipeline_path_abs }}
     permissions:
       contents: 'read'
-      id-token: 'write' # Required for Workload Identity Federation
+      id-token: 'write'
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -58,20 +56,21 @@ jobs:
           python-version: '3.9'
 
       - name: Install KFP SDK and Google Cloud AI Platform SDK
-        run: pip install kfp==2.7.0 google-cloud-aiplatform==1.38.1 # Pin versions to use KFP v2
+        run: pip install kfp==2.7.0 google-cloud-aiplatform==1.38.1
 
       - name: Authenticate to Google Cloud
         uses: 'google-github-actions/auth@v2'
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.GCP_WORKLOAD_IDENTITY_POOL_ID }}/providers/${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_ID }}'
-          service_account: ${{ secrets.GHA_SERVICE_ACCOUNT_EMAIL }} # SA for GitHub Actions
+          service_account: ${{ secrets.GHA_SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up Cloud SDK (gcloud)
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Verify GCP Credentials & Enable APIs
         run: |
+          set -e
           gcloud auth list
           gcloud config list project
           gcloud services enable aiplatform.googleapis.com storage.googleapis.com --project ${{ env.GCP_PROJECT_ID }}
@@ -79,6 +78,7 @@ jobs:
       - name: Compile KFP Pipelines
         id: compile
         run: |
+          set -e
           python src/compiler.py --py "${{ env.DEV_PIPELINE_PYTHON_FILE }}" --output "${{ env.DEV_PIPELINE_COMPILED_FILE }}"
           python src/compiler.py --py "${{ env.PROD_PIPELINE_PYTHON_FILE }}" --output "${{ env.PROD_PIPELINE_COMPILED_FILE }}"
           echo "Compiled pipelines:"
@@ -121,23 +121,24 @@ jobs:
 
       - name: Submit Dev Vertex AI Pipeline Job
         run: |
+          set -e
           PIPELINE_JOB_ID="dev-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
           gcloud ai pipeline-jobs submit \
             --pipeline-spec-uri "./compiled-pipelines/${{ env.DEV_PIPELINE_COMPILED_FILE }}" \
             --location "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --display-name "${{ env.DEV_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
-            --parameter-values "input_raw_data_gcs_uri=${{ env.DEV_INPUT_DATA_GCS_URI }},reg_rate=${{ env.DEV_REG_RATE }},min_accuracy=${{ env.DEV_MIN_ACCURACY }}" \
+            --parameter-values "project_id=${{ env.GCP_PROJECT_ID }},region=${{ env.GCP_REGION }},model_display_name=${{ env.MODEL_DISPLAY_NAME }},input_raw_data_gcs_uri=${{ env.DEV_INPUT_DATA_GCS_URI }},reg_rate=${{ env.DEV_REG_RATE }},min_accuracy=${{ env.DEV_MIN_ACCURACY }}" \
             --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
             --pipeline-root "${{ env.PIPELINE_RUNS_GCS_ROOT_BASE }}/dev/${PIPELINE_JOB_ID}" \
             --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=dev" \
-            --enable-caching # Enable caching for dev runs
+            --enable-caching
 
   require-approval:
     name: Require Approval Before Production
     runs-on: ubuntu-latest
     needs: train-dev-vertex
-    environment: production # This environment should have protection rules in GitHub settings
+    environment: production
     steps:
       - name: Await Reviewer Approval
         run: echo "Waiting for approval before proceeding with production Vertex AI job..."
@@ -169,14 +170,11 @@ jobs:
 
       - name: Submit Prod Vertex AI Pipeline Job
         run: |
+          set -e
           PIPELINE_JOB_ID="prod-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
           gcloud ai pipeline-jobs submit \
             --pipeline-spec-uri "./compiled-pipelines/${{ env.PROD_PIPELINE_COMPILED_FILE }}" \
             --location "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --display-name "${{ env.PROD_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
-            --parameter-values "input_raw_data_gcs_uri=${{ env.PROD_INPUT_DATA_GCS_URI }},reg_rate=${{ env.PROD_REG_RATE }},min_accuracy=${{ env.PROD_MIN_ACCURACY }}" \
-            --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
-            --pipeline-root "${{ env.PIPELINE_RUNS_GCS_ROOT_BASE }}/prod/${PIPELINE_JOB_ID}" \
-            --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=prod"
-            # Caching might be disabled or used cautiously for prod
+            --parameter-values "project_id=${{ env.GCP_PROJECT_ID }},region=${{ env.GCP_REGION }}"

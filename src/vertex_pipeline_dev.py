@@ -4,8 +4,9 @@ Vertex AI KFP Pipeline for Development
 - Trains a model.
 - Evaluates the model.
 - Conditionally proceeds based on accuracy.
+- Registers the model in Vertex AI Model Registry if approved.
 """
-from kfp.v2 import dsl # Keep this import for dsl.Condition
+from kfp.v2 import dsl  # Keep this import for dsl.Condition
 from kfp.v2.dsl import component, pipeline, Input, Output, Dataset, Model, Metrics
 
 PIPELINE_NAME = "mlops-diabetes-dev-pipeline"
@@ -14,8 +15,9 @@ PIPELINE_DESCRIPTION = "Development pipeline for diabetes prediction model on Ve
 GCS_PACKAGE_REQUIREMENTS = [
     "google-cloud-storage==2.10.0",
     "pandas==1.5.3",
-    "scikit-learn==1.2.2", # Match version from SageMaker if possible, or update
-    "joblib==1.2.0"
+    "scikit-learn==1.2.2",  # Match version from SageMaker if possible, or update
+    "joblib==1.2.0",
+    "google-cloud-aiplatform==1.38.1"  # Added for Vertex AI Model Registry
 ]
 
 @component(
@@ -23,11 +25,10 @@ GCS_PACKAGE_REQUIREMENTS = [
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def preprocess_data_op(
-    input_gcs_uri: str,  # GCS URI to the raw diabetes.csv
+    input_gcs_uri: str,
     output_train_data: Output[Dataset],
     output_test_data: Output[Dataset]
 ):
-    """Loads raw data, splits into train/test, and saves to GCS."""
     import pandas as pd
     from google.cloud import storage
     from urllib.parse import urlparse
@@ -35,7 +36,6 @@ def preprocess_data_op(
     import os
 
     logging.basicConfig(level=logging.INFO)
-
     parsed_uri = urlparse(input_gcs_uri)
     bucket_name = parsed_uri.netloc
     blob_name = parsed_uri.path.lstrip('/')
@@ -49,7 +49,6 @@ def preprocess_data_op(
     logging.info(f"Downloaded raw data from {input_gcs_uri} to {local_raw_data_file}")
 
     df = pd.read_csv(local_raw_data_file)
-
     train_data = df.sample(frac=0.8, random_state=42)
     test_data = df.drop(train_data.index)
 
@@ -63,21 +62,17 @@ def preprocess_data_op(
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def train_model_op(
-    train_data: Input[Dataset], # Updated from InputPath("Dataset")
-    output_model: Output[Model], # Updated from OutputPath("Model")
+    train_data: Input[Dataset],
+    output_model: Output[Model],
     reg_rate: float
 ):
-    """Trains a logistic regression model and saves it."""
     import pandas as pd
     import joblib
     from sklearn.linear_model import LogisticRegression
     import logging
-    import os
 
     logging.basicConfig(level=logging.INFO)
-
-    train_df = pd.read_csv(train_data.path) # Access path via .path
-
+    train_df = pd.read_csv(train_data.path)
     columns = ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure',
                'TricepsThickness', 'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
     X_train = train_df[columns]
@@ -85,33 +80,27 @@ def train_model_op(
 
     model = LogisticRegression(C=1 / reg_rate, solver="liblinear")
     model.fit(X_train, y_train.values.ravel())
-
-    joblib.dump(model, output_model.path) # Access path via .path
-    logging.info(f"Model trained and saved to {output_model.path}") # Access path via .path
+    joblib.dump(model, output_model.path)
+    logging.info(f"Model trained and saved to {output_model.path}")
 
 @component(
     base_image="python:3.9",
     packages_to_install=GCS_PACKAGE_REQUIREMENTS,
 )
 def evaluate_model_op(
-    test_data: Input[Dataset], # Updated from InputPath("Dataset")
-    model: Input[Model],       # Updated from InputPath("Model")
-    metrics: Output[Metrics],  # Updated from OutputPath("Metrics")
+    test_data: Input[Dataset],
+    model: Input[Model],
+    metrics: Output[Metrics],
     min_accuracy: float
-) -> float: # Returns accuracy
-    """Evaluates the model and returns accuracy."""
+) -> float:
     import pandas as pd
     import joblib
     from sklearn.metrics import accuracy_score
-    import json
     import logging
-    import os
 
     logging.basicConfig(level=logging.INFO)
-
     model_artifact = joblib.load(model.path)
     test_df = pd.read_csv(test_data.path)
-
     columns = ['Pregnancies', 'PlasmaGlucose', 'DiastolicBloodPressure',
                'TricepsThickness', 'SerumInsulin', 'BMI', 'DiabetesPedigree', 'Age']
     X_test = test_df[columns]
@@ -122,7 +111,6 @@ def evaluate_model_op(
 
     metrics.log_metric("accuracy", accuracy)
     metrics.log_metric("min_accuracy_threshold", min_accuracy)
-
     logging.info(f"Model accuracy: {accuracy}")
     logging.info(f"Evaluation metrics saved to {metrics.path}")
     return accuracy
@@ -130,20 +118,47 @@ def evaluate_model_op(
 @component(
     base_image="python:3.9",
 )
-def model_approved_op(model_accuracy: float, model: Input[Model]):
-    """Placeholder for actions after model approval."""
+def model_approved_op():
+    """Dummy component to signify model approval."""
     import logging
     logging.basicConfig(level=logging.INFO)
-    logging.info(f"Model at {model.uri} approved with accuracy: {model_accuracy}. Ready for registration/deployment.")
+    logging.info("Model accuracy meets the threshold. Proceeding with registration.")
+
+@component(
+    base_image="python:3.9",
+    packages_to_install=GCS_PACKAGE_REQUIREMENTS,
+)
+def register_model_op(
+    project_id: str,
+    region: str,
+    model_display_name: str,
+    model_artifact: Input[Model],
+    registered_model: Output[Model]
+):
+    """Uploads the model to Vertex AI Model Registry."""
+    from google.cloud import aiplatform
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    aiplatform.init(project=project_id, location=region)
+    logging.info(f"Registering model '{model_display_name}' from {model_artifact.uri}")
+
+    artifact_dir = model_artifact.uri.rsplit('/', 1)[0]
+    model = aiplatform.Model.upload(
+        display_name=model_display_name,
+        artifact_uri=artifact_dir,
+        serving_container_image_uri="us-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-2:latest",
+        sync=True
+    )
+    registered_model.uri = model.resource_name
+    logging.info(f"Model registered: {model.resource_name}")
 
 @component(
     base_image="python:3.9",
 )
 def model_rejected_op(model_accuracy: float, min_accuracy: float):
-    """Placeholder for actions if model is rejected."""
     import logging
     logging.basicConfig(level=logging.INFO)
-    # To fail the pipeline, raise an exception.
     raise ValueError(f"Model REJECTED. Accuracy {model_accuracy} is below threshold {min_accuracy}.")
 
 @pipeline(
@@ -151,7 +166,10 @@ def model_rejected_op(model_accuracy: float, min_accuracy: float):
     description=PIPELINE_DESCRIPTION
 )
 def dev_diabetes_pipeline(
-    input_raw_data_gcs_uri: str, # e.g., gs://your-bucket/raw-data/diabetes.csv
+    project_id: str,
+    region: str,
+    model_display_name: str,
+    input_raw_data_gcs_uri: str,
     reg_rate: float = 0.05,
     min_accuracy: float = 0.70
 ):
@@ -171,10 +189,14 @@ def dev_diabetes_pipeline(
     )
 
     with dsl.Condition(evaluate_task.outputs["accuracy"] >= min_accuracy, name="accuracy-check"):
-        model_approved_op(
-            model_accuracy=evaluate_task.outputs["accuracy"],
-            model=train_task.outputs["output_model"]
-        )
+        model_approved_op_task = model_approved_op()
+        register_task = register_model_op(
+            project_id=project_id,
+            region=region,
+            model_display_name=model_display_name,
+            model_artifact=train_task.outputs["output_model"]
+        ).after(model_approved_op_task)
+
     with dsl.Condition(evaluate_task.outputs["accuracy"] < min_accuracy, name="accuracy-too-low"):
         model_rejected_op(
             model_accuracy=evaluate_task.outputs["accuracy"],
