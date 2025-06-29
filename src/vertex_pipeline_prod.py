@@ -45,7 +45,9 @@ def preprocess_data_op(
     blob_name = parsed.path.lstrip("/")
 
     local_file = "diabetes_raw_prod.csv"
-    storage.Client().bucket(bucket_name).blob(blob_name).download_to_filename(local_file)
+    storage.Client().bucket(bucket_name).blob(blob_name).download_to_filename(
+        local_file
+    )
     df = pd.read_csv(local_file)
 
     train_data = df.sample(frac=0.8, random_state=42)
@@ -54,7 +56,11 @@ def preprocess_data_op(
     train_data.to_csv(output_train_data.path, index=False)
     test_data.to_csv(output_test_data.path, index=False)
 
-    logging.info(f"[PROD] Preprocessed and split data saved to: {output_train_data.path}, {output_test_data.path}")
+    logging.info(
+        "[PROD] Preprocessed and split data saved to: %s, %s",
+        output_train_data.path,
+        output_test_data.path,
+    )
 
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def train_model_op(
@@ -75,7 +81,10 @@ def train_model_op(
     model = LogisticRegression(C=1 / reg_rate, solver="liblinear")
     model.fit(X, y)
     joblib.dump(model, output_model.path)
-    logging.info(f"[PROD] Model trained and stored at: {output_model.path}")
+    logging.info(
+        "[PROD] Model trained and stored at: %s",
+        output_model.path
+    )
 
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def evaluate_model_op(
@@ -101,15 +110,24 @@ def evaluate_model_op(
     metrics.log_metric("accuracy", accuracy)
     metrics.log_metric("min_accuracy_threshold", min_accuracy)
 
-    logging.info(f"[PROD] Accuracy = {accuracy:.4f}")
+    logging.info(
+        "[PROD] Accuracy = %.4f",
+        accuracy
+    )
     return accuracy
 
 @component(base_image=BASE_IMAGE)
 def model_approved_op(model_accuracy: float, model: Input[Model]):
     import logging
     logging.basicConfig(level=logging.INFO)
-    logging.info(f"[PROD] ✅ Model approved with accuracy: {model_accuracy:.4f}")
-    logging.info(f"[PROD] Ready for registration from: {model.uri}")
+    logging.info(
+        "[PROD] ✅ Model approved with accuracy: %.4f",
+        model_accuracy
+    )
+    logging.info(
+        "[PROD] Ready for registration from: %s",
+        model.uri
+    )
 
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def register_model_op(
@@ -129,23 +147,37 @@ def register_model_op(
     upload_args = {
         "display_name": model_display_name,
         "artifact_uri": artifact_dir,
-        "serving_container_image_uri": "us-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-2:latest",
+        "serving_container_image_uri": (
+            "us-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-2:latest"
+        ),
         "sync": True
     }
 
     if parent_model:
         upload_args["parent_model"] = parent_model
-        logging.info(f"[PROD] Registering new version under parent model: {parent_model}")
+        logging.info(
+            "[PROD] Registering new version under parent model: %s",
+            parent_model
+        )
 
     model = aiplatform.Model.upload(**upload_args)
-    logging.info(f"[PROD] Model registered: {model.resource_name}")
+    logging.info(
+        "[PROD] Model registered: %s",
+        model.resource_name
+    )
 
 @component(base_image=BASE_IMAGE)
 def model_rejected_op(model_accuracy: float, min_accuracy: float):
     import logging
     logging.basicConfig(level=logging.INFO)
-    logging.error(f"[PROD] ❌ Model rejected. Accuracy {model_accuracy:.4f} < {min_accuracy}")
-    raise ValueError("Model accuracy does not meet minimum production threshold.")
+    logging.error(
+        "[PROD] ❌ Model rejected. Accuracy %.4f < %.2f",
+        model_accuracy,
+        min_accuracy
+    )
+    raise ValueError(
+        "Model accuracy does not meet minimum production threshold."
+    )
 
 @pipeline(name=PIPELINE_NAME, description=PIPELINE_DESCRIPTION)
 def prod_diabetes_pipeline(
@@ -157,7 +189,9 @@ def prod_diabetes_pipeline(
     min_accuracy: float = 0.80,
     parent_model: str = ""
 ):
-    preprocess_task = preprocess_data_op(input_gcs_uri=input_raw_data_gcs_uri)
+    preprocess_task = preprocess_data_op(
+        input_gcs_uri=input_raw_data_gcs_uri
+    )
 
     train_task = train_model_op(
         train_data=preprocess_task.outputs["output_train_data"],
@@ -170,7 +204,10 @@ def prod_diabetes_pipeline(
         min_accuracy=min_accuracy
     )
 
-    with dsl.If(eval_task.output >= min_accuracy, name="pass-accuracy-threshold"):
+    with dsl.If(
+        eval_task.output >= min_accuracy,
+        name="pass-accuracy-threshold"
+    ):
         approved = model_approved_op(
             model_accuracy=eval_task.output,
             model=train_task.outputs["output_model"]
@@ -183,7 +220,10 @@ def prod_diabetes_pipeline(
             parent_model=parent_model
         ).after(approved)
 
-    with dsl.If(eval_task.output < min_accuracy, name="fail-accuracy-threshold"):
+    with dsl.If(
+        eval_task.output < min_accuracy,
+        name="fail-accuracy-threshold"
+    ):
         model_rejected_op(
             model_accuracy=eval_task.output,
             min_accuracy=min_accuracy
