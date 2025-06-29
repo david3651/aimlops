@@ -22,7 +22,7 @@ from sagemaker.workflow.condition_step import ConditionStep
 input_data_s3_prod = ParameterString(name="InputDataS3", default_value="s3://your-bucket/prod-data/")
 training_instance_type_prod = ParameterString(name="TrainingInstanceType", default_value="ml.c5.4xlarge")
 min_accuracy_value = ParameterFloat(name="MinAccuracyValue", default_value=0.80)
-role = "<your-sagemaker-execution-role-arn>"
+role = "arn:aws:iam::799101906606:role/ase-cronos-mlops-sagemaker-execution-role"
 
 # Data processing step
 sk_processor = SKLearnProcessor(framework_version="0.23-1", role=role, instance_type="ml.m5.large", instance_count=1)
