@@ -1,10 +1,10 @@
-name: Train Model in SageMaker (Development & Production)
+# name: Train Model in SageMaker (Development & Production)
 
-on:
-  push:
+#on:
+#  push:
     # branches:
       # - main
-  pull_request:
+#  pull_request:
     # branches:
       # - main
   workflow_dispatch:
