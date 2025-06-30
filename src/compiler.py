@@ -33,7 +33,8 @@ def main() -> None:
     else:
         raise ValueError(
             f"Unknown pipeline file specified: {args.py}. "
-            f"Must contain 'vertex_pipeline_dev.py' or 'vertex_pipeline_prod.py'."
+            "Must contain 'vertex_pipeline_dev.py' or "
+            "'vertex_pipeline_prod.py'."
         )
 
     try:

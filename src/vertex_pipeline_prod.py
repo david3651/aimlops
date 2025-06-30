@@ -28,6 +28,7 @@ FEATURE_COLUMNS = [
     "TricepsThickness", "SerumInsulin", "BMI", "DiabetesPedigree", "Age"
 ]
 
+
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def preprocess_data_op(
     input_gcs_uri: str,
@@ -62,6 +63,7 @@ def preprocess_data_op(
         output_test_data.path,
     )
 
+
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def train_model_op(
     train_data: Input[Dataset],
@@ -85,6 +87,7 @@ def train_model_op(
         "[PROD] Model trained and stored at: %s",
         output_model.path
     )
+
 
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def evaluate_model_op(
@@ -116,6 +119,7 @@ def evaluate_model_op(
     )
     return accuracy
 
+
 @component(base_image=BASE_IMAGE)
 def model_approved_op(model_accuracy: float, model: Input[Model]):
     import logging
@@ -128,6 +132,7 @@ def model_approved_op(model_accuracy: float, model: Input[Model]):
         "[PROD] Ready for registration from: %s",
         model.uri
     )
+
 
 @component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
 def register_model_op(
@@ -166,6 +171,7 @@ def register_model_op(
         model.resource_name
     )
 
+
 @component(base_image=BASE_IMAGE)
 def model_rejected_op(model_accuracy: float, min_accuracy: float):
     import logging
@@ -178,6 +184,7 @@ def model_rejected_op(model_accuracy: float, min_accuracy: float):
     raise ValueError(
         "Model accuracy does not meet minimum production threshold."
     )
+
 
 @pipeline(name=PIPELINE_NAME, description=PIPELINE_DESCRIPTION)
 def prod_diabetes_pipeline(
