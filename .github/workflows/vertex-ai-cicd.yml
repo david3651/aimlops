@@ -33,6 +33,7 @@ jobs:
   setup-and-compile-gcp:
     name: Setup GCP & Compile Vertex AI Pipelines
     runs-on: ubuntu-latest
+    environment: development  # or production, as appropriate
     outputs:
       dev_pipeline_path: ${{ steps.compile.outputs.dev_pipeline_path_abs }}
       prod_pipeline_path: ${{ steps.compile.outputs.prod_pipeline_path_abs }}
