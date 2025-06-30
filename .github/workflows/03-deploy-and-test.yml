@@ -1,10 +1,10 @@
-name: Deploy and Test Model
+#name: Deploy and Test Model
 
-on:
-  workflow_run:
-    workflows: ["Train Model in Development and Production"]
-    types:
-      - completed
+#on:
+#  workflow_run:
+#    workflows: ["Train Model in Development and Production"]
+#    types:
+#      - completed
 
 jobs:
   deploy-staging:
