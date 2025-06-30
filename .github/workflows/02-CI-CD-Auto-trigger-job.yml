@@ -1,4 +1,4 @@
-#name: Train Model in SageMaker (Development & Production)
+name: AWS Train Model in SageMaker (Development & Production)
 
 # on:
 #   push:
@@ -8,6 +8,8 @@
 #     branches:
 #       - main
 #   workflow_dispatch:
+on:
+  workflow_dispatch:
 
 jobs:
   setup-aws:
