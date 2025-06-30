@@ -18,9 +18,21 @@ def main() -> None:
     Parses command-line arguments and compiles the selected pipeline
     into a YAML file suitable for Vertex AI Pipelines.
     """
-    parser = argparse.ArgumentParser(description="Compile a KFP v2 pipeline for Vertex AI.")
-    parser.add_argument("--py", type=str, required=True, help="Path to the Python file defining the pipeline.")
-    parser.add_argument("--output", type=str, required=True, help="Path to the output compiled YAML file.")
+    parser = argparse.ArgumentParser(
+        description="Compile a KFP v2 pipeline for Vertex AI."
+    )
+    parser.add_argument(
+        "--py",
+        type=str,
+        required=True,
+        help="Path to the Python file defining the pipeline."
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        required=True,
+        help="Path to the output compiled YAML file."
+    )
     args = parser.parse_args()
 
     pipeline_func: Callable[..., Pipeline]
