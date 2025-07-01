@@ -6,8 +6,8 @@ Vertex AI KFP Pipeline for Development
 - Conditionally registers the model in Vertex AI Model Registry if accuracy is sufficient
 """
 
-from kfp.v2 import dsl
-from kfp.v2.dsl import (
+from kfp import dsl
+from kfp.dsl import (
     component,
     pipeline,
     Input,

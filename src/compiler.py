@@ -6,8 +6,7 @@ Supports dev and prod variants of the diabetes prediction pipeline with dynamic 
 import argparse
 import sys
 from typing import Callable
-from kfp.v2 import compiler
-from kfp.dsl import Pipeline
+from kfp import compiler
 
 from vertex_pipeline_dev import dev_diabetes_pipeline
 from vertex_pipeline_prod import prod_diabetes_pipeline
@@ -34,8 +33,6 @@ def main() -> None:
         help="Path to the output compiled YAML file."
     )
     args = parser.parse_args()
-
-    pipeline_func: Callable[..., Pipeline]
 
     # Select pipeline function based on filename
     if "vertex_pipeline_dev.py" in args.py:

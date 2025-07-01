@@ -6,8 +6,8 @@ Vertex AI KFP Pipeline for Production
 - Conditionally registers a new version linked to a parent model in Vertex AI Model Registry
 """
 
-from kfp.v2 import dsl
-from kfp.v2.dsl import (
+from kfp import dsl
+from kfp.dsl import (
     component,
     pipeline,
     Input,
