@@ -105,6 +105,9 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2.1.0
 
+      - name: Update gcloud components
+        run: gcloud components update --quiet
+
       - name: Download compiled pipelines
         uses: actions/download-artifact@v4.1.8
         with:
@@ -152,6 +155,9 @@ jobs:
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2.1.0
+
+      - name: Update gcloud components
+        run: gcloud components update --quiet
 
       - name: Download compiled pipelines
         uses: actions/download-artifact@v4.1.8
