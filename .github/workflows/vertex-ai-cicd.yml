@@ -120,15 +120,28 @@ jobs:
       - name: Submit Dev Vertex AI Job
         run: |
           PIPELINE_JOB_ID="dev-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
-          gcloud ai pipeline-jobs submit \
+          PARAMS_JSON=$(jq -n \
+            --arg project_id "${{ env.GCP_PROJECT_ID }}" \
+            --arg region "${{ env.GCP_REGION }}" \
+            --arg model_display_name "${{ env.MODEL_DISPLAY_NAME }}" \
+            --arg input_raw_data_gcs_uri "${{ env.DEV_INPUT_DATA_GCS_URI }}" \
+            --arg reg_rate "${{ env.DEV_REG_RATE }}" \
+            --arg min_accuracy "${{ env.DEV_MIN_ACCURACY }}" \
+            '{project_id: $project_id, region: $region, model_display_name: $model_display_name, input_raw_data_gcs_uri: $input_raw_data_gcs_uri, reg_rate: ($reg_rate|tonumber), min_accuracy: ($min_accuracy|tonumber)}')
+          LABELS_JSON=$(jq -n \
+            --arg commit_sha "${GITHUB_SHA::7}" \
+            --arg trigger_event "${GITHUB_EVENT_NAME}" \
+            --arg env "dev" \
+            '{commit_sha: $commit_sha, trigger_event: $trigger_event, env: $env}')
+          python src/run_pipeline.py \
+            --project-id "${{ env.GCP_PROJECT_ID }}" \
+            --region "${{ env.GCP_REGION }}" \
             --pipeline-spec-uri "./compiled-pipelines/${{ env.DEV_PIPELINE_COMPILED_FILE }}" \
-            --location "${{ env.GCP_REGION }}" \
-            --project "${{ env.GCP_PROJECT_ID }}" \
-            --display-name "${{ env.DEV_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
-            --parameter-values "project_id=${{ env.GCP_PROJECT_ID }},region=${{ env.GCP_REGION }},model_display_name=${{ env.MODEL_DISPLAY_NAME }},input_raw_data_gcs_uri=${{ env.DEV_INPUT_DATA_GCS_URI }},reg_rate=${{ env.DEV_REG_RATE }},min_accuracy=${{ env.DEV_MIN_ACCURACY }}" \
             --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
             --pipeline-root "${{ env.PIPELINE_RUNS_GCS_ROOT_BASE }}/dev/${PIPELINE_JOB_ID}" \
-            --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=dev" \
+            --display-name "${{ env.DEV_PIPELINE_DISPLAY_NAME }}" \
+            --parameter-values-json "$PARAMS_JSON" \
+            --labels-json "$LABELS_JSON" \
             --enable-caching
 
   require-approval:
@@ -171,13 +184,26 @@ jobs:
       - name: Submit Prod Vertex AI Job
         run: |
           PIPELINE_JOB_ID="prod-$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
-          gcloud ai pipeline-jobs submit \
+          PARAMS_JSON=$(jq -n \
+            --arg project_id "${{ env.GCP_PROJECT_ID }}" \
+            --arg region "${{ env.GCP_REGION }}" \
+            --arg model_display_name "${{ env.MODEL_DISPLAY_NAME }}" \
+            --arg input_raw_data_gcs_uri "${{ env.PROD_INPUT_DATA_GCS_URI }}" \
+            --arg reg_rate "${{ env.PROD_REG_RATE }}" \
+            --arg min_accuracy "${{ env.PROD_MIN_ACCURACY }}" \
+            '{project_id: $project_id, region: $region, model_display_name: $model_display_name, input_raw_data_gcs_uri: $input_raw_data_gcs_uri, reg_rate: ($reg_rate|tonumber), min_accuracy: ($min_accuracy|tonumber)}')
+          LABELS_JSON=$(jq -n \
+            --arg commit_sha "${GITHUB_SHA::7}" \
+            --arg trigger_event "${GITHUB_EVENT_NAME}" \
+            --arg env "prod" \
+            '{commit_sha: $commit_sha, trigger_event: $trigger_event, env: $env}')
+          python src/run_pipeline.py \
+            --project-id "${{ env.GCP_PROJECT_ID }}" \
+            --region "${{ env.GCP_REGION }}" \
             --pipeline-spec-uri "./compiled-pipelines/${{ env.PROD_PIPELINE_COMPILED_FILE }}" \
-            --location "${{ env.GCP_REGION }}" \
-            --project "${{ env.GCP_PROJECT_ID }}" \
-            --display-name "${{ env.PROD_PIPELINE_DISPLAY_NAME }}-${PIPELINE_JOB_ID}" \
-            --parameter-values "project_id=${{ env.GCP_PROJECT_ID }},region=${{ env.GCP_REGION }},model_display_name=${{ env.MODEL_DISPLAY_NAME }},input_raw_data_gcs_uri=${{ env.PROD_INPUT_DATA_GCS_URI }},reg_rate=${{ env.PROD_REG_RATE }},min_accuracy=${{ env.PROD_MIN_ACCURACY }}" \
             --service-account "${{ env.VERTEX_PIPELINE_SERVICE_ACCOUNT }}" \
             --pipeline-root "${{ env.PIPELINE_RUNS_GCS_ROOT_BASE }}/prod/${PIPELINE_JOB_ID}" \
-            --labels "commit-sha=${GITHUB_SHA::7},trigger-event=${GITHUB_EVENT_NAME},env=prod" \
+            --display-name "${{ env.PROD_PIPELINE_DISPLAY_NAME }}" \
+            --parameter-values-json "$PARAMS_JSON" \
+            --labels-json "$LABELS_JSON" \
             --enable-caching
