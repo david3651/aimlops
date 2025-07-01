@@ -63,6 +63,9 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2.1.0
 
+      - name: Install gcloud components
+        run: gcloud components install alpha beta --quiet
+
       - name: Enable required GCP services
         run: |
           gcloud auth list
@@ -105,8 +108,8 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2.1.0
 
-      - name: Update gcloud components
-        run: gcloud components update --quiet
+      - name: Install gcloud components
+        run: gcloud components install alpha beta --quiet
 
       - name: Download compiled pipelines
         uses: actions/download-artifact@v4.1.8
@@ -156,8 +159,8 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2.1.0
 
-      - name: Update gcloud components
-        run: gcloud components update --quiet
+      - name: Install gcloud components
+        run: gcloud components install alpha beta --quiet
 
       - name: Download compiled pipelines
         uses: actions/download-artifact@v4.1.8
