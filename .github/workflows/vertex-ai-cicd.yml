@@ -3,6 +3,7 @@ name: Vertex AI CI/CD - Train Model (Dev & Prod)
 on:
   push:
     branches: [main]
+#   branches: [main, feature/*]
   pull_request:
     branches: [main]
   workflow_dispatch:
