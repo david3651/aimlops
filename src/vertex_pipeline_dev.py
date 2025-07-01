@@ -31,7 +31,14 @@ FEATURE_COLUMNS = [
 ]
 
 
-@component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
+@component(
+    base_image=BASE_IMAGE,
+    packages_to_install=[
+        pkg.strip()
+        for pkg in open("src/requirements.txt")
+        if pkg.strip() and not pkg.startswith("#")
+    ],
+)
 def preprocess_data_op(
     input_gcs_uri: str,
     output_train_data: Output[Dataset],
@@ -66,7 +73,14 @@ def preprocess_data_op(
     )
 
 
-@component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
+@component(
+    base_image=BASE_IMAGE,
+    packages_to_install=[
+        pkg.strip()
+        for pkg in open("src/requirements.txt")
+        if pkg.strip() and not pkg.startswith("#")
+    ],
+)
 def train_model_op(
     train_data: Input[Dataset],
     output_model: Output[Model],
@@ -91,7 +105,14 @@ def train_model_op(
     )
 
 
-@component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
+@component(
+    base_image=BASE_IMAGE,
+    packages_to_install=[
+        pkg.strip()
+        for pkg in open("src/requirements.txt")
+        if pkg.strip() and not pkg.startswith("#")
+    ],
+)
 def evaluate_model_op(
     test_data: Input[Dataset],
     model: Input[Model],
@@ -131,7 +152,14 @@ def model_approved_op():
     )
 
 
-@component(base_image=BASE_IMAGE, requirements_file_path=REQUIREMENTS_PATH)
+@component(
+    base_image=BASE_IMAGE,
+    packages_to_install=[
+        pkg.strip()
+        for pkg in open("src/requirements.txt")
+        if pkg.strip() and not pkg.startswith("#")
+    ],
+)
 def register_model_op(
     project_id: str,
     region: str,
