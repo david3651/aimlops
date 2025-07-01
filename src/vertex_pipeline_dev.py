@@ -237,7 +237,7 @@ def dev_diabetes_pipeline(
     )
 
     with dsl.If(
-        eval_task.outputs["output"] >= min_accuracy,
+        eval_task.outputs["Output"] >= min_accuracy,
         name="pass-accuracy-threshold"
     ):
         approved = model_approved_op()
@@ -250,10 +250,10 @@ def dev_diabetes_pipeline(
         ).after(approved)
 
     with dsl.If(
-        eval_task.outputs["output"] < min_accuracy,
+        eval_task.outputs["Output"] < min_accuracy,
         name="fail-accuracy-threshold"
     ):
         model_rejected_op(
-            model_accuracy=eval_task.outputs["output"],
+            model_accuracy=eval_task.outputs["Output"],
             min_accuracy=min_accuracy
         )
