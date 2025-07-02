@@ -98,6 +98,9 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Check out repo
+        uses: actions/checkout@v4.1.7
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2.1.3
         with:
@@ -162,6 +165,9 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Check out repo
+        uses: actions/checkout@v4.1.7
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2.1.3
         with:
