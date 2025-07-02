@@ -51,107 +51,106 @@ This comprehensive workshop establishes the financial foundation for migrating A
 
 Set up and familiarize yourself with the AWS Cost Explorer interface.
 
-#### Instructions
+#### Updated Instructions
 
 1. Open your web browser
-2. Navigate to the AWS Cost Management Console
+2. Navigate to the AWS Management Console
 3. Sign in with your AWS credentials
-4. In the left navigation pane, select **Cost Explorer**
-5. Click **Launch Cost Explorer** if you’re a first-time user (may take up to 24 hours for data processing)
+4. In the **AWS Console Search Bar**, type “Cost Explorer”
+5. Select **Cost Explorer** from the search results under **Billing**
+6. Click **Launch Cost Explorer** (first-time users may experience up to a 24-hour delay for data population)
 
 #### Initial Cost Explorer Setup
 
 **Setup Checklist:**
 
-- Once loaded, verify you can see the main dashboard
-- Set time range to “Last 13 months” using the date picker in the top right
-- Set granularity to “Monthly” from the dropdown menu
-- Group by “Service” from the “Group by” dropdown
-- Enable the **Forecast** toggle at the bottom of the chart
+- Verify the main dashboard is visible
+- Set time range to **Last 13 months** using the date picker
+- Set granularity to **Monthly**
+- Group by **Service**
+- Enable **Forecast** toggle at the bottom of the chart
 
 #### Interface Familiarization
 
-- Explore the main dashboard chart area
-- Review chart type options (bar, line, stacked) using the chart controls
-- Examine the filters panel on the left side
-- Test the new Cost Comparison feature by clicking **Compare** in the Report Parameters panel
+- Explore the dashboard chart area
+- Test chart types (bar, line, stacked)
+- Review the left-side filters panel
+- Try the **Compare** feature in Report Parameters
 
-💡 Pro Tip: Use preconfigured views like “Monthly costs by service” or “RI Utilization” to accelerate insights. Take screenshots of your initial dashboard view for comparison later in the workshop.
+💡 Pro Tip: Use preconfigured views like “Monthly costs by service” or “RI Utilization” for quick insights. Capture screenshots of your initial dashboard for later comparison.
+
+---
 
 ### Step 1.2: SageMaker Cost Analysis (25 minutes)
 
-⚠️ Important: Focus specifically on SageMaker services to understand current ML spending patterns.
+⚠️ Important: Focus on **Amazon SageMaker** costs to understand current ML spend.
 
 #### 1. Filter for SageMaker Services
 
-1. In the Filters panel, click on **Service**
-2. Type “SageMaker” to search
-3. Select **Amazon SageMaker** from the results
-4. Click **Apply filters**
-5. Adjust time range to “Last 6 months”
-6. Change granularity to “Daily”
+- In the Filters panel, click **Service**
+- Search and select **Amazon SageMaker**
+- Click **Apply filters**
+- Set the time range to **Last 6 months**
+- Change granularity to **Daily**
 
 #### 2. Analyze SageMaker Cost Components
 
-1. Change “Group by” to **Usage Type**
-2. Review the chart to identify top cost drivers
-3. Click on chart segments to drill down
-4. Use Cost Comparison to compare current vs. previous month
-5. Document findings in a spreadsheet
+- Group by **Usage Type**
+- Identify top cost drivers
+- Click chart segments to drill down
+- Use **Compare** to examine month-over-month changes
+- Log findings in a spreadsheet
 
-#### 3. Create Cost Breakdown Analysis
+#### 3. Create Cost Breakdown Analysis Table
 
-Create a table in your spreadsheet with this structure:
-
-| Component           | Monthly Cost | % of Total | Trend   | Instance Types/Notes       |
-|---------------------|--------------|------------|---------|----------------------------|
-| Training Instances  | $X,XXX       | XX%        | ↑/↓/→   | ml.p3.2xlarge, ml.g5.xlarge |
-| Notebook Instances  | $XXX         | XX%        | ↑/↓/→   | Development environments   |
-| Endpoints           | $X,XXX       | XX%        | ↑/↓/→   | Production model serving   |
-| Storage (S3)        | $XXX         | XX%        | ↑/↓/→   | Training data, models      |
-| Data Transfer       | $XXX         | XX%        | ↑/↓/→   | Inter-region, internet     |
-| Other Services      | $XXX         | XX%        | ↑/↓/→   | Supporting AWS services    |
+| Component           | Monthly Cost | % of Total | Trend   | Instance Types/Notes         |
+|---------------------|--------------|------------|---------|------------------------------|
+| Training Instances  | $X,XXX       | XX%        | ↑/↓/→   | ml.p3.2xlarge, ml.g5.xlarge  |
+| Notebook Instances  | $XXX         | XX%        | ↑/↓/→   | Development environments     |
+| Endpoints           | $X,XXX       | XX%        | ↑/↓/→   | Production model serving     |
+| Storage (S3)        | $XXX         | XX%        | ↑/↓/→   | Training data, models        |
+| Data Transfer       | $XXX         | XX%        | ↑/↓/→   | Inter-region, internet       |
+| Other Services      | $XXX         | XX%        | ↑/↓/→   | Supporting AWS services      |
 
 #### 4. Document Key Findings
 
-Answer these questions based on your analysis:
-
 - Which instance types consume the most budget?
-- What time periods show highest usage patterns?
-- Are there obvious idle periods or unused resources?
-- What’s the ratio between training costs vs. inference costs?
+- When is usage the highest?
+- Any idle periods or unnecessary resources?
+- Ratio between training and inference costs?
+
+---
 
 ### Step 1.3: Advanced Cost Analysis Techniques (20 minutes)
 
 #### 1. Usage Pattern Analysis
 
-- Change granularity to “Hourly” for the most recent week
-- Identify peak usage times and patterns
-- Look for consistent idle resource patterns
-- Switch back to “Daily” view to document seasonal variations
-- Test Amazon Q Developer queries (e.g., “Which region had the largest cost increase last month?”)
+- Switch to **Hourly** granularity for the recent week
+- Detect peak usage periods and idle patterns
+- Switch back to **Daily** to document seasonal behavior
+- Use **Amazon Q Developer** for insights like:
+  - “Which region had the largest cost increase last month?”
 
 #### 2. Explore Additional Filters
 
-Experiment with these filters:
+Try filters for:
 
-- Region: Concentration of SageMaker usage by region
-- Usage Type: Filter by instance type (e.g., ml.m5.large)
-- Linked Account: Analyze usage across AWS Organization accounts
+- **Region**: Concentration of activity
+- **Usage Type**: (e.g., ml.m5.large)
+- **Linked Account**: For AWS Organizations
 
 #### 3. Cost Anomaly Detection Review
 
-Note: Cost Anomaly Detection is automatically configured for new accounts as of March 2025.
+**New Feature:** Cost Anomaly Detection enabled by default (as of March 2025)
 
-1. In the AWS Console search bar, type “Cost Anomaly Detection”
-2. Navigate to the service’s overview dashboard
-3. Review any existing anomalies
-4. Check the AWS Services monitor that was auto-created
-5. Review daily email alert subscriptions
-6. Click individual anomalies to investigate
-7. Document patterns for optimization
+- In the AWS Console **Search Bar**, type **Cost Anomaly Detection**
+- Select the service
+- Review existing anomalies and daily alert settings
+- Click into anomalies to investigate
+- Document findings
 
-💡 Pro Tip: Look for consistent patterns of unused resources during off-hours or weekends—immediate optimization opportunities.
+💡 Pro Tip: Idle weekends or underutilized resources are low-hanging fruit for cost cuts.
+
 
 ## Section 2: AWS Budgets and Alerts Configuration (45 minutes)
 
@@ -300,79 +299,64 @@ Note: Cost Anomaly Detection is automatically configured for new accounts as of 
 ### Step 1.1: Billing Account Setup and Navigation (20 minutes)
 
 1. Open your web browser
-2. Navigate to the Google Cloud Console
-3. Sign in with your Google Cloud credentials
-4. Click the billing menu icon (💳) in the top navigation bar
-5. Select your billing account from the dropdown
+2. Navigate to the Google Cloud Console and sign in
+3. In the **GCP Console Search Bar**, type `All Products` and select **All Products** from the drop-down
+4. On the All Products page, under **Management**, click **Billing**
+5. Select your billing account from the Billing screen
 
 #### Billing Account Configuration Review
 
-- In the left sidebar, click **Account management**
+- Click **Account management**
 - Verify permissions:
-  - Click **Account permissions**
-  - Confirm your billing role (Administrator, User, or Viewer)
+  - Click or view **+ Add principal** (Note: You may not have permission)
+  - Confirm your billing role (Billing Account; Administrator, User, or Viewer)
   - Document your access level
 - Review account hierarchy:
-  - Note any linked projects
-  - Understand billing account structure
+  - Note linked projects
 - Check payment settings:
   - Click **Payment settings**
-  - Review payment methods
-  - Verify automatic payment and billing alerts
+  - Review payment methods and automatic payment alerts
 
 #### Initial Billing Dashboard Overview
 
-- Click **Overview** in the left sidebar
+- Click **Overview**
 - Review current month spending:
   - Note total month-to-date spend
   - Identify top spending services
-  - Check spending trends chart
-  - Use Gemini Cloud Assist for AI-powered cost insights (if available)
-- Analyze service-level breakdown:
-  - Review services cost chart
-  - Click chart segments for details
-- Check project-level allocation:
-  - Review costs by project
-  - Note any ML-related projects
+  - Check spending by viewing the billing report
+  - Select **View report** under the **Top Services** chart
+- Analyze service-level breakdown: click **Group by (Service)** (Note: By default the report groups cost by "Service")
+- Interact with the Chart: Hover your pointer over any part of the chart. A tooltip will appear showing costs for each service.
+
 
 ---
 
 ### Step 1.2: Cloud Billing Reports Analysis (25 minutes)
 
-1. In the left sidebar, navigate to **Cost management** → **Reports**
+1. In the **GCP Console Search Bar**, type `Reports` and select **Reports** under **Cost management**
 2. Familiarize yourself with the Reports interface
 
 #### Configure Analysis View
 
-- Set time range: **Last 6 months**
-- Group by options:
-  - Service (default)
-  - Project
-  - Project hierarchy (folder-level)
-  - SKU for detailed analysis
-- Apply filters:
-  - Projects, Services, SKUs, Locations, Labels
-  - Folders & Organizations for ancestry analysis
+- Set time range to **Last 6 months**
+- Group by: Service, Project, Project hierarchy (folder-level), or SKU
+- Apply filters: Projects, Services, SKUs, Locations, Labels, Folders & Organizations
 
 #### Analyze Current GCP Usage for ML Services
 
-- Filter for AI/ML services:
+- Use the Filters panel to include only AI/ML services:
   - Vertex AI
   - Compute Engine
   - Cloud Storage
   - Container Registry
 - Document current baseline:
   - Create a baseline cost matrix
-  - Note usage patterns for storage and compute
+  - Note storage and compute usage patterns
 
 #### Enhanced Report Features (2025)
 
-- Save custom view:
-  - Click **Save as new**, name “ML Migration Baseline”
-  - Set as regular monitoring view
-- Export capabilities:
-  - Click **Export** → **Download CSV**
-  - Save for AWS comparison
+- Save custom view: click **Save as new**, name “ML Migration Baseline” and set it as your monitoring view
+- Export data: click **Export** → **Download CSV** for offline AWS/GCP comparison
 
 ---
 
@@ -380,26 +364,20 @@ Note: Cost Anomaly Detection is automatically configured for new accounts as of 
 
 #### Custom Time Ranges and Detailed Views
 
-- Experiment with date picker:
-  - “Last 30 days” for recent patterns
-  - “Last 12 months” for trends
-- Change granularity:
-  - Monthly ↔ Daily to observe usage variation
+- In the Reports interface date picker, try:
+  - **Last 30 days** for recent patterns
+  - **Last 12 months** for long-term trends
+- Toggle granularity between **Monthly** and **Daily**
 
 #### Enhanced Savings and Credits Analysis (2025)
 
-- Navigate to **Savings** (formerly Discounts and credits)
-- Review subcategories:
-  - Committed use discounts
-  - Sustained use discounts
+1. In the **GCP Console Search Bar**, type `Savings` and select **Savings** (formerly Discounts & credits)
+2. Review subcategories: committed use discounts and sustained use discounts
 
 #### Export and Save Capabilities
 
-- Export data:
-  - Click **Export** → **Download CSV**
-- Create saved reports:
-  - Click **Save as new**, name “ML Migration Baseline”
-  - Set as regular monitoring view
+- Export data: click **Export** → **Download CSV**
+- Save report: click **Save as new**, name “ML Migration Baseline”
 
 ---
 
@@ -415,3 +393,834 @@ Create this table in your spreadsheet for future ML workload planning:
 | Cloud Storage          | $XXX                 | $XXX              | Data storage migration           |
 | Networking             | $XXX                 | $XXX              | Data transfer and egress         |
 | Other Services         | $XXX                 | $XXX              | Supporting infrastructure        |
+
+
+---
+
+
+## Section 2: Google Cloud Budgets and Alerts Configuration (45 minutes)
+
+---
+
+### Step 2.1: Create ML Workload Budget (20 minutes)
+
+1. Navigate to Budget Creation
+
+   - In the billing console left sidebar, click “Budgets & alerts”
+   - Click “Create budget” button
+
+2. Budget Scope and Configuration
+
+   **Budget details:**
+   - Name: `Vertex-AI-ML-Workloads`
+   - Time range: Monthly (recurring)
+   - Enhanced options (2025): Monthly, Quarterly, Yearly, or Custom range available
+
+   **Budget scope:**
+   - Projects: Select “All projects” or specific ML-related projects
+   - Services: Click “Add filter” → “Services” then select Vertex AI, Compute Engine, Cloud Storage
+   - Optional filters: Labels, folders, or credit filters (leave unfiltered for broader coverage)
+
+3. Set Budget Amount
+
+   - Type: “Specified amount”
+   - Alternative (2025): “Last period’s spend” for dynamic budgeting
+   - Amount: `$[Enter estimated monthly ML spend based on AWS analysis]`
+   - Currency: Auto-detected based on billing account (verify)
+
+4. Configure Alert Thresholds
+
+   - Click “Next” to proceed
+   - Set multiple threshold rules:
+     - 50% Alert – Early Warning (Actual spend) to billing admins and users
+     - 75% Alert – Planning Alert (Actual spend)
+     - 90% Alert – Critical (Actual spend)
+     - 100% Forecasted Alert (Forecasted spend)
+   - Click “Finish” to create the budget
+
+---
+
+### Step 2.2: Environment-Specific Budget Setup (25 minutes)
+
+1. Create Development Environment Budget
+
+   - In Budgets & alerts, click “Create budget”
+   - Name: `ML-Development-Environment`
+   - Time range: Monthly
+   - Budget amount: $500
+   - Currency: [Verify billing account currency]
+   - Scope: Projects for development/testing and Services filter for Vertex AI and Compute Engine
+   - Alert thresholds:
+     - 50% – Early alert
+     - 75% – Mid-cycle planning
+     - 90% – Critical
+   - Click “Finish”
+
+   Tip: Define projects using naming conventions (e.g., dev-, test-) for governance efficiency.
+
+2. Create Production Environment Budget
+
+   - Click “Create budget”
+   - Name: `ML-Production-Environment`
+   - Time range: Monthly
+   - Budget amount: $5,000
+   - Currency: [Verify billing account currency]
+   - Scope: Projects for production and Services for prediction-related services (Vertex AI, Cloud Storage)
+   - Alert thresholds:
+     - 25% – Initial spend signal
+     - 50% – Midpoint
+     - 75% – Escalation
+     - 90% – Critical
+     - 100% Forecasted – Predictive alert
+   - Click “Finish”
+
+3. Budget Dashboard Review
+
+   - Return to “Budgets & alerts” in the billing console
+   - Review all budgets: Confirm naming, amounts, and scope; ensure thresholds are set
+   - Monitor current spend vs. budget
+   - Test alert email functionality: temporarily adjust threshold to 1%, monitor for alert email, restore original threshold
+
+   Note: Alert testing may not generate emails immediately due to notification lags and single-trigger-per-threshold limits.
+
+
+---
+
+## Section 3: Google Cloud Pricing Calculator Analysis (60 minutes)
+
+---
+
+### Step 3.1: Access and Setup Pricing Calculator (15 minutes)
+
+1. Access Google Cloud Pricing Calculator
+
+   - Open a new browser tab
+   - Navigate to: Google Cloud Pricing Calculator
+   - Review available product categories
+   - Understand the estimate building process
+   - Note the save and share functionality
+
+2. Prepare for ML Workload Estimation
+
+   - Reference your AWS analysis: have your SageMaker cost breakdown available
+   - Set region: choose “us-central1” (Iowa) to match typical AWS usage
+   - Plan estimation approach: break down by major service categories
+
+---
+
+### Step 3.2: Vertex AI Training Cost Estimation (20 minutes)
+
+1. Add Vertex AI Custom Training
+
+   - In the calculator, click “Vertex AI” → “Custom training”
+   - Configure training parameters based on your AWS analysis:
+     - Region: us-central1
+     - Machine type: n1-standard-8 (closest to ml.m5.2xlarge)
+     - Training hours per month: [Based on AWS SageMaker analysis]
+     - Number of training jobs: [Based on current frequency]
+
+   - Add GPU configuration if needed:
+     - GPU type: NVIDIA V100 (if using GPU instances)
+     - Number of GPUs: match AWS configuration
+     - GPU hours per month: [Based on AWS usage]
+
+   - Add storage for training:
+     - Persistent disk: 100 GB SSD
+     - Adjust size based on your storage needs
+
+2. Configure Multiple Training Scenarios
+
+   - Development training: smaller instances, fewer hours
+   - Production training: larger instances, include batch jobs
+
+---
+
+### Step 3.3: Vertex AI Prediction and Supporting Services (25 minutes)
+
+1. Add Vertex AI Prediction Endpoints
+
+   - In the calculator, click “Vertex AI” → “Online prediction”
+   - Configure endpoint parameters:
+     - Machine type: n1-standard-4
+     - Number of nodes: start with 2, autoscale to 5
+     - Monthly requests: [Based on AWS endpoint usage]
+     - Avg. request size: [Estimate in KB]
+     - Avg. response size: [Estimate in KB]
+
+2. Add Cloud Storage Estimation
+
+   - Click “Cloud Storage”
+   - Configure storage tiers:
+     - Standard: [GB] for active data
+     - Nearline: [GB] for infrequent data
+     - Archive: [GB] for long-term retention
+   - Operations:
+     - Class A operations (uploads/writes): [Count]
+     - Class B operations (downloads/reads): [Count]
+
+3. Add Compute Engine for Custom ML Workloads
+
+   - Click “Compute Engine”
+   - Configure VM instances:
+     - Instance type: custom or predefined
+     - Operating hours per month: [Hours]
+     - Persistent disk: [GB]
+     - GPUs: add if required
+
+4. Add Networking Costs
+
+   - Click “Network”
+   - Configure data transfer:
+     - Egress to internet: [GB]
+     - Inter-region traffic: [GB]
+
+---
+
+### Step 3.4: Generate and Analyze Estimate (10 minutes)
+
+1. Review Total Estimate
+
+   - Scroll to the estimate summary
+   - Review monthly totals by service
+   - Check annual projections
+   - Note any suggested cost optimizations
+
+2. Save and Export Estimate
+
+   - Save estimate: name “ML Migration Cost Projection” with description
+   - Share estimate: click “Share estimate” and save the URL
+   - Export data: click “Export” → download CSV for detailed analysis
+
+
+---
+
+## Section 4: Cost Comparison Framework Development (45 minutes)
+
+---
+
+### Step 4.1: Create Comprehensive AWS vs GCP Comparison (25 minutes)
+
+1. Compile Detailed Cost Comparison
+
+Create a comprehensive comparison matrix in your spreadsheet:
+
+| Service Component        | AWS SageMaker | GCP Vertex AI | Monthly Difference | Annual Difference | Notes                                |
+|--------------------------|---------------|---------------|--------------------|-------------------|--------------------------------------|
+| Training Compute         | $X,XXX        | $X,XXX        | ±$XXX              | ±$X,XXX           | Include GPU costs                    |
+| Prediction Endpoints     | $X,XXX        | $X,XXX        | ±$XXX              | ±$X,XXX           | Auto-scaling comparison              |
+| Development Environment  | $XXX          | $XXX          | ±$XX               | ±$XXX            | Notebook instances vs Workbench      |
+| Storage Costs            | $XXX          | $XXX          | ±$XX               | ±$XXX            | S3 vs Cloud Storage                  |
+| Data Transfer            | $XXX          | $XXX          | ±$XX               | ±$XXX            | Egress and inter-region              |
+| Management Overhead      | $XXX          | $XXX          | ±$XX               | ±$XXX            | Operational costs                    |
+| Support and SLA          | $XXX          | $XXX          | ±$XX               | ±$XXX            | Enterprise support levels            |
+| **Total Monthly**        | $X,XXX        | $X,XXX        | ±$XXX              | ±$X,XXX           | Net difference                       |
+
+2. Document Key Assumptions
+
+- Usage patterns remain constant
+- Similar performance requirements
+- Equivalent SLA requirements
+
+Identify cost variables:
+
+- Factors that could increase costs
+- Potential for additional savings
+- Regional pricing differences
+
+Note service capability differences:
+
+- Features available in one platform but not the other
+- Performance differences that might affect costs
+
+---
+
+### Step 4.2: Total Cost of Ownership (TCO) Analysis (20 minutes)
+
+1. Expand Analysis Beyond Direct Cloud Costs
+
+Create a comprehensive TCO analysis:
+
+| Cost Category               | One-Time Costs | Ongoing Monthly Costs | Notes                                              |
+|-----------------------------|----------------|-----------------------|----------------------------------------------------|
+| Direct Cloud Costs          | –              | $X,XXX                | From comparison above                              |
+| Migration Costs             | $X,XXX         | –                     | Data transfer, application modification            |
+| Training and Certification  | $X,XXX         | –                     | Team upskilling                                    |
+| Operational Changes         | $X,XXX         | $XXX                  | New tools and processes                            |
+| Risk Mitigation             | $XXX           | $XXX                  | Security and compliance                            |
+| Opportunity Costs           | $X,XXX         | –                     | Development delays                                 |
+| **Total TCO**               | $X,XXX         | $X,XXX                | Complete picture                                   |
+
+2. Calculate Break-Even Analysis
+
+- Determine monthly savings: GCP monthly cost – AWS monthly cost
+- Calculate break-even period: Total one-time costs ÷ Monthly savings
+- Create scenarios:
+  1. Best case (maximum savings)
+  2. Realistic case (expected savings)
+  3. Worst case (minimal savings)
+
+---
+
+## Section 5: Cost Monitoring and Governance Setup (30 minutes)
+
+---
+
+### Step 5.1: Mobile App Integration and Monitoring (15 minutes)
+
+1. Google Cloud Console Mobile App Setup (2025 Feature)
+
+- Download Google Cloud Console mobile app from app store
+- Sign in with your Google Cloud credentials
+- Navigate to billing information features
+- Set up mobile notifications for budget alerts
+- Test mobile access to cost estimates and billing reports
+
+2. Advanced Monitoring Setup
+
+- In Google Cloud Console, navigate to **Monitoring**
+- Create custom dashboards for cost monitoring:
+  1. Click **Dashboards** → **Create Dashboard**
+  2. Name: `ML Workload Cost Monitoring`
+  3. Add charts for cost-tracking metrics
+  4. Configure time ranges and aggregation
+- Save dashboard for regular monitoring
+
+---
+
+### Step 5.2: Establish Cost Governance Framework (15 minutes)
+
+1. Create Cost Review Process Documentation
+
+# Google Cloud ML Cost Management Process
+
+## Daily Tasks (5 minutes)
+
+- [ ] Check billing overview dashboard
+- [ ] Review any budget alerts
+- [ ] Validate no unexpected resource creation
+
+## Weekly Tasks (30 minutes)
+
+- [ ] Generate and review cost reports
+- [ ] Analyze spending trends using Reports interface
+- [ ] Update cost forecasts based on current usage
+- [ ] Review and adjust budgets if necessary
+
+## Monthly Tasks (2 hours)
+
+- [ ] Complete budget reconciliation
+- [ ] Implement identified cost optimizations
+- [ ] Prepare stakeholder cost summary reports
+- [ ] Update pricing calculator estimates based on actual usage
+- [ ] Review and validate cost allocation across projects
+
+## Contact Information
+
+- Finance Team: [Contact information]
+- Cloud Operations: [Contact information]
+- ML Team Leads: [Contact information]
+- Escalation Manager: [Contact information]
+
+---
+
+## Lab 1.2 Deliverables Checklist
+
+- Google Cloud cost analysis report with projected ML costs
+- Configured GCP budgets with appropriate alert thresholds
+- Comprehensive cost comparison framework between AWS and GCP
+- TCO analysis with break-even calculations
+- Cost governance framework documentation
+- Mobile monitoring setup for ongoing cost management
+
+---
+
+## 🎯 Workshop Success Validation
+
+### Immediate Success Indicators
+
+**Technical Competency Validation**
+
+- Navigation Proficiency: can independently navigate both AWS and GCP billing consoles
+- Data Analysis Skills: successfully extract and analyze cost data from both platforms
+- Tool Configuration: properly configure budgets, alerts, and monitoring
+- Export Capabilities: ability to export and save cost data for offline analysis
+
+**Business Analysis Validation**
+
+- Cost Baseline Established: documented current AWS ML spending with detailed breakdown
+- Projection Accuracy: realistic GCP cost projections using pricing calculator
+- Optimization Identification: specific, actionable cost optimization opportunities
+- TCO Understanding: comprehensive understanding of total cost factors
+
+**Process Implementation Validation**
+
+- Monitoring Setup: working budget alerts and monitoring processes
+- Documentation Quality: clear, actionable documentation and runbooks
+- Governance Framework: appropriate cost review and approval processes
+- Stakeholder Communication: clear articulation of findings and recommendations
+
+---
+
+## Key Achievements Summary
+
+**Financial Foundation Established**
+
+- ✅ AWS Cost Baseline: comprehensive understanding of current SageMaker spending patterns and optimization opportunities
+- ✅ GCP Cost Projections: realistic estimates created using official Google Cloud pricing calculator
+- ✅ Cost Comparison Framework: detailed AWS vs GCP comparison with total cost of ownership analysis
+- ✅ Financial Governance: established cost monitoring, budgeting, and review processes
+
+**Technical Competencies Developed**
+
+- ✅ Console Mastery: proficient navigation of AWS and GCP billing consoles
+- ✅ Cost Analysis Skills: ability to extract insights from billing data and identify trends
+- ✅ Monitoring Configuration: working budget alerts and cost monitoring systems
+- ✅ Data Export and Analysis: skills to export, analyze, and present cost data effectively
+
+**Business Capabilities Enhanced**
+
+- ✅ ROI Analysis: clear understanding of migration financial benefits and timeline
+- ✅ Risk Assessment: identified and quantified financial risks and mitigation strategies
+- ✅ Stakeholder Communication: ability to present compelling business case for migration
+- ✅ Decision Support: framework for making informed, data-driven migration decisions
+
+**Organizational Impact**
+
+- ✅ Process Documentation: clear, actionable cost management procedures
+- ✅ Knowledge Transfer: documented processes enable team knowledge sharing
+- ✅ Continuous Improvement: framework for ongoing cost optimization and management
+- ✅ Strategic Alignment: cost management integrated with broader migration strategy
+
+
+---
+
+# 📋 Google Cloud ML Cost Management Runbook
+
+---
+
+## 📋 Purpose and Scope
+
+This runbook provides standardized operational procedures for managing Google Cloud costs for machine learning workloads, specifically designed for teams migrating from AWS SageMaker to Google Cloud Vertex AI. All procedures are console-based and require no programming knowledge.
+
+---
+
+## 🎯 Key Performance Indicators (KPIs)
+
+- **Budget variance:** <10% monthly variance from planned spend
+- **Cost optimization:** 5% quarterly cost reduction through optimization
+- **Alert response time:** <2 hours for budget threshold alerts
+- **Monthly reporting:** Complete cost analysis within 3 business days of month-end
+
+---
+
+## 📅 Daily Tasks (Console-Based)
+
+**⏱️ Estimated Time: 15–20 minutes**
+
+### Morning Cost Health Check (10 minutes)
+
+**1. Billing Overview Dashboard Review**
+
+- Navigate to **Billing Overview**
+- Check current month spend vs. budget
+- Review "Top spending services"
+- Verify daily spend trend vs. historical patterns
+**Action Required:** If spend exceeds 150%, trigger emergency procedures
+
+**2. Budget Alert Status Check**
+
+- Go to **Budgets & Alerts**
+- Check budget alert status for all ML workloads
+**Action Required:** Investigate if any budget exceeds 75% utilization mid-month
+
+**3. Cloud Monitoring Dashboard Check**
+
+- Access **Cloud Monitoring**
+- Open "ML Workload Cost Monitoring" dashboard
+- Review charts and anomalies
+**Action Required:** If cost deviates >20% from baseline, document and investigate
+
+### Resource Validation Sweep (5–10 minutes)
+
+**4. Vertex AI Resource Check**
+
+- Navigate to **Vertex AI**
+- Check for running training jobs or idle endpoints
+- Confirm Workbench instances are stopped outside hours
+**Action Required:** Stop unnecessary resources
+
+**5. Compute Engine Instance Review**
+
+- Navigate to **Compute Engine**
+- Scan for unauthorized/idle VMs
+**Action Required:** Document and escalate as needed
+
+---
+
+### ✅ Daily Checklist Completion Log:
+
+- **Date:** ___________
+- **Daily Budget Status:** ✓ On Track / ⚠️ Warning / 🚨 Alert
+- **Unexpected Resources Found:** Yes / No
+- **Issues Requiring Follow-up:** ___________
+- **Completed by:** ___________
+
+---
+
+## 📊 Weekly Tasks (Analysis and Planning)
+
+**⏱️ Estimated Time: 45–60 minutes**
+
+### Monday: Weekly Cost Analysis (30 minutes)
+
+1. Generate Detailed Cost Reports
+   - Cost Reports → Time Range: “Last 7 days”
+   - Group by Service & Project
+   - Export to CSV
+   **Deliverable:** Weekly trend analysis spreadsheet
+
+2. Service-Level Deep Dive
+   - Filter for Vertex AI
+   - Analyze training vs. prediction, Storage, Compute
+   **Deliverable:** Optimization recommendations
+
+3. Usage Pattern Analysis
+   - Set to Daily granularity
+   - Compare weekend vs. weekday usage
+   - Identify off-peak scheduling opportunities
+   **Deliverable:** Usage optimization schedule
+
+### Friday: Planning and Forecasting (30 minutes)
+
+4. Budget Performance Review
+   - Budgets & Alerts → Compare usage to thresholds
+   **Action Required:** Adjust budgets if needed
+
+5. Forecast Validation and Updates
+   - Pricing Calculator → Update saved estimates
+   **Deliverable:** Updated cost forecast
+
+---
+
+### 🧾 Weekly Analysis Template
+
+- **Week of:** ___________
+- **Total Weekly Spend:** $___________
+- **Variance:** ±___%
+- **Top Cost Driver:** ___________
+- **Key Optimization:** ___________
+- **Next Week Forecast:** $___________
+- **Red Flags:** ___________
+- **Analyst:** ___________
+
+---
+
+## 📈 Monthly Tasks (Governance and Reporting)
+
+**⏱️ Estimated Time: 2–3 hours**
+
+### Month-End Analysis (Day 1–3)
+
+1. Budget Reconciliation
+   - Compare actual vs. budgeted for ML services
+   **Deliverable:** Budget variance report
+
+2. Implement Cost Optimizations
+   - Right-size, clean up unused resources
+   **Deliverable:** Optimization log
+
+3. Stakeholder Reporting
+   - Executive summary + trend charts + ROI update
+   **Deliverable:** Leadership report
+
+### Mid-Month Strategic Review (Day 15)
+
+4. Cross-Platform Cost Comparison
+   - Update AWS vs. GCP matrix
+   **Deliverable:** Cost-benefit analysis
+
+5. Project Cost Allocation Review
+   - Group by Project
+   - Validate labeling & cost centers
+   **Deliverable:** Allocation accuracy report
+
+---
+
+### 📊 Monthly Report Template
+
+- **Month:** ___________
+- **Spend:** $___________
+- **Variance:** ±___%
+- **Top Cost Area:** ___________
+- **Savings Achieved:** $___________
+- **ROI Status:** On Track / Behind / Ahead
+- **Recommendations:** ___________
+- **Prepared by:** ___________
+- **Approved by:** ___________
+- **Distribution:** Finance, IT, ML Teams
+
+---
+
+## 📋 Quarterly Tasks (Strategic Review)
+
+**⏱️ Estimated Time: 4–6 hours**
+
+### 1. TCO Update (2 hours)
+
+- Use 3-month cost data
+- Update actual vs. projected TCO
+- Recalculate migration ROI
+**Deliverable:** Updated 3-Year TCO Model
+
+### 2. Service Optimization Review (2 hours)
+
+- Identify under-utilized resources
+- Review and optimize scaling policies
+**Deliverable:** Optimization roadmap
+
+### 3. Long-Term Planning (1–2 hours)
+
+- Forecast seasonal/project needs
+- Update estimates for new initiatives
+**Deliverable:** Next quarter budget
+
+---
+
+### 📝 Quarterly Review Checklist
+
+- **Quarter:** Q___ 20___
+- **Variance:** ±___%
+- **Migration Savings:** $___________
+- **Top Opportunities:**
+  1. ___________
+  2. ___________
+  3. ___________
+- **Impact Assessment:** ___________
+- **Recommendations:** ___________
+- **Committee:** ___________
+
+---
+
+## 🚨 Emergency Procedures
+
+---
+
+### Budget Overage Response Protocol
+
+#### Immediate Actions (Within 1 hour)
+
+**1. Access Billing Console**
+
+- Navigate to **Billing Overview**
+- Identify specific services causing overage
+- Document exact overage amount and timeframe
+
+**2. Resource Usage Investigation**
+
+- Check **Vertex AI** for unexpected training jobs
+- Review **Compute Engine** for unauthorized instances
+- Examine **Cloud Storage** for data transfer spikes
+
+**3. Immediate Cost Controls**
+
+- Stop non-critical training jobs
+- Scale down over-provisioned prediction endpoints
+- Implement temporary spending limits if available
+
+---
+
+#### Follow-up Actions (Within 4 hours)
+
+**4. Stakeholder Notification**
+
+- Email finance team with initial findings
+- Notify ML team leads of service disruptions
+- Escalate to management if overage >25% of monthly budget
+
+**5. Root Cause Analysis**
+
+- Use **Cost Reports** to identify the source
+- Check recent changes or deployments
+- Document the timeline of contributing events
+
+**6. Prevention Planning**
+
+- Update budget thresholds
+- Implement additional monitoring alerts
+- Plan process improvements
+
+---
+
+### Unexpected Cost Spike Investigation
+
+#### Investigation Workflow
+
+**1. Time-Based Analysis**
+
+- Set Cost Reports granularity to **Hourly**
+- Identify cost spike window
+- Correlate with recent deployments or updates
+
+**2. Service Identification**
+
+- Filter reports by **Service**
+- Investigate unusual usage or anomalies
+- Review supporting services for cascading costs
+
+**3. Resource Correlation**
+
+- Cross-reference with **Cloud Monitoring** metrics
+- Identify resource scaling events or deviations
+- Verify performance or configuration changes
+
+**4. Mitigation Implementation**
+
+- Apply immediate controls
+- Enable targeted alerts
+- Document the incident
+
+---
+
+### Emergency Contact Escalation Matrix
+
+| Alert Level                             | Escalation Path                                                  |
+|-----------------------------------------|-------------------------------------------------------------------|
+| >10% monthly budget variance            | ML Team Lead → Finance Business Partner                           |
+| >25% monthly budget variance            | IT Ops Manager → Finance Manager → Program Director               |
+| >50% monthly budget variance            | Finance Director → IT Director → Executive Leadership             |
+| >100% budget breach (Critical)          | Full escalation + External vendor support                         |
+
+---
+
+## 📞 Key Contacts and Resources
+
+### Team Contacts
+
+- **Finance Team:** finance-ml@sysco.com |
+- **Cloud Operations:** cloudops@sysco.com |
+- **Lead MLOPS Strategist:** david.santana@sysco.com |
+- **Escalation Manager:** cost-escalation@sysco.com |
+
+### Emergency Contacts (24/7)
+
+- **IT Operations Center:** (555) 999-0000
+- **Finance Emergency Line:** (555) 999-0001
+- **Executive On-Call:** (555) 999-0002
+
+### External Support
+
+- **Google Cloud Support:** Support Case Portal
+- **Account Manager:** [From Google Cloud Console]
+- **TAM:** [If applicable]
+
+---
+
+## 🔗 Quick Access Console URLs
+
+### Daily Operations
+
+- [Billing Overview](https://console.cloud.google.com/billing)
+- [Budgets & Alerts](https://console.cloud.google.com/billing/budgets)
+- [Cloud Monitoring](https://console.cloud.google.com/monitoring)
+- [Vertex AI Console](https://console.cloud.google.com/vertex-ai)
+
+### Analysis and Reporting
+
+- [Cost Reports](https://console.cloud.google.com/billing/reports)
+- [Pricing Calculator](https://cloud.google.com/products/calculator)
+- [Resource Manager](https://console.cloud.google.com/cloud-resource-manager)
+
+### Service Management
+
+- [Compute Engine](https://console.cloud.google.com/compute/instances)
+- [Cloud Storage](https://console.cloud.google.com/storage)
+- [IAM & Admin](https://console.cloud.google.com/iam-admin)
+
+---
+
+## 📋 Documentation and Change Log
+
+**Runbook Maintenance**
+
+- **Last Updated:** [Date]
+- **Version:** 1.0
+- **Next Review Date:** [Quarterly]
+- **Owner:** [Cost Management Team]
+
+**Change History**
+
+| Date     | Version | Changes                 | Approved By |
+|----------|---------|--------------------------|--------------|
+| [Date]   | 1.0     | Initial runbook creation | [Name]       |
+
+### Training and Certification
+
+- **Required Training:** Google Cloud Cost Management Fundamentals
+- **Certification Renewal:** Annual
+- **Training Records:** Maintained in [System/Location]
+
+---
+
+## 📌 Quick Reference Card
+
+**Print and keep at desk for emergencies**
+
+### EMERGENCY COST SPIKE RESPONSE
+
+1. Open Billing Overview → Identify spike
+2. Review recent resource usage
+3. Stop non-critical services
+4. Email finance team findings
+5. Escalate if >25% budget variance
+
+### DAILY HEALTH CHECK (15 min)
+
+- ✓ Billing overview dashboard
+- ✓ Budget alerts status
+- ✓ Monitoring dashboard
+- ✓ Resource scan
+- ✓ Issue documentation
+
+**KEY CONTACTS**
+
+- **Finance:** (555) 123-4567
+- **CloudOps:** (555) 234-5678
+- **Emergency:** (555) 999-0000
+
+---
+
+## Final Reminder
+
+The financial discipline and analytical skills you've developed in this module will be essential throughout your cloud migration. Continue reviewing, optimizing, and aligning costs with strategic goals.
+
+---
+
+## 🎯 Workshop Module 1 Complete!
+
+Congratulations! You’ve built a robust financial foundation for your AWS → GCP ML migration. The budgeting, tracking, and governance systems you’ve implemented will drive success in future modules.
+
+---
+
+## 📄 License
+
+This workshop content is provided under the **MIT License**. See the LICENSE file for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please review the contributing guidelines before submitting pull requests.
+
+---
+
+## 📞 Support
+
+For help with this workshop:
+
+- Create an issue in the repository
+- Contact the workshop maintainers
+- Review the troubleshooting section above
+
+---
+
+© 2025 - 2026 **ML Migration Workshop Series**
