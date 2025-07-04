@@ -170,10 +170,11 @@ Try filters for:
 
 - Under **Budget setup**, choose **Customize (advanced)**
 - Budget type: **Cost budget**
+- Select **Next**
 - Budget name: `SageMaker-ML-Workloads-Monthly`
 - Period: **Monthly**
 - Budget renewal type: **Recurring budget**
-- Start month: Current month
+- Start month: Choose the current month
 
 **Set budget amount:**
 
@@ -183,32 +184,35 @@ Try filters for:
 
 **Budget scope (Filters):**
 
-1. Click **Add filter**
-2. Select **Service** from the dropdown
-3. Choose **Amazon SageMaker**
-4. Click **Add filter** again if needed for other services
+1. Select **Filter specific AWS cost dimensions**
+2. Click **Add filter**
+3. Select **Service** from the dropdown
+4. Choose **Amazon SageMaker**
+5. Click **Apply filter**
 
 #### 3. Configure Alert Thresholds
 
 1. Click **Next** to proceed to alert configuration
+2. Select **Add an alert threshold**
 2. Set up multiple alerts:
 
    - **Alert 1 – Early Warning**
      - Threshold: 75%
-     - Type: **Forecasted**
+     - Trigger: **Forecasted**
      - Recipients: ML team leads’ emails
 
    - **Alert 2 – Critical Alert**
      - Click **Add an alert threshold**
      - Threshold: 90%
-     - Type: **Actual**
+     - Trigger: **Actual**
      - Recipients: Additional stakeholders
 
    - **Alert 3 – Budget Exceeded**
      - Click **Add an alert threshold**
      - Threshold: 100%
-     - Type: **Actual**
+     - Trigger: **Actual**
      - Recipients: Management escalation contacts
+     - Select **Next**
 
 **Enhanced Alert Options (2025 Feature):**
 

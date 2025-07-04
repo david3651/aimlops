@@ -38,6 +38,7 @@ FEATURE_COLUMNS = [
         for pkg in open("src/requirements.txt")
         if pkg.strip() and not pkg.startswith("#")
     ],
+    machine_type="n1-standard-1",  # Use a 1-vCPU machine
 )
 def preprocess_data_op(
     input_gcs_uri: str,
@@ -80,6 +81,7 @@ def preprocess_data_op(
         for pkg in open("src/requirements.txt")
         if pkg.strip() and not pkg.startswith("#")
     ],
+    machine_type="n1-standard-1",  # Use a 1-vCPU machine
 )
 def train_model_op(
     train_data: Input[Dataset],
@@ -112,6 +114,7 @@ def train_model_op(
         for pkg in open("src/requirements.txt")
         if pkg.strip() and not pkg.startswith("#")
     ],
+    machine_type="n1-standard-1",  # Use a 1-vCPU machine
 )
 def evaluate_model_op(
     test_data: Input[Dataset],
@@ -143,7 +146,10 @@ def evaluate_model_op(
     return accuracy
 
 
-@component(base_image=BASE_IMAGE)
+@component(
+    base_image=BASE_IMAGE,
+    machine_type="e2-custom-1-1024",  # Smallest possible 1-vCPU machine
+)
 def model_approved_op():
     import logging
     logging.basicConfig(level=logging.INFO)
@@ -159,6 +165,7 @@ def model_approved_op():
         for pkg in open("src/requirements.txt")
         if pkg.strip() and not pkg.startswith("#")
     ],
+    machine_type="n1-standard-1",  # Use a 1-vCPU machine for SDK calls
 )
 def register_model_op(
     project_id: str,
@@ -197,7 +204,10 @@ def register_model_op(
     )
 
 
-@component(base_image=BASE_IMAGE)
+@component(
+    base_image=BASE_IMAGE,
+    machine_type="e2-custom-1-1024",  # Smallest possible 1-vCPU machine
+)
 def model_rejected_op(model_accuracy: float, min_accuracy: float):
     import logging
     logging.basicConfig(level=logging.INFO)
