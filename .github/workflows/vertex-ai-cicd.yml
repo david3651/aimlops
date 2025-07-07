@@ -101,6 +101,11 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v4.1.7
 
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.9'
+
       - name: Install dependencies
         run: pip install -r src/requirements.txt
 
@@ -170,6 +175,11 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4.1.7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.9'
 
       - name: Install dependencies
         run: pip install -r src/requirements.txt
