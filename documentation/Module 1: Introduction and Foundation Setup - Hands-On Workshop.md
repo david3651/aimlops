@@ -19,6 +19,7 @@ By the end of this workshop, participants will be able to:
 - Google Cloud Console access with billing account access
 - Basic AWS and Google Cloud knowledge
 - Web browser (Chrome, Firefox, Safari, or Edge)
+- Participants are recommended to use browser capabilities such as Incognito or In private Browser Sessions due to single-sign-on and cached credential login challenges.
 
 ### Workshop Overview
 
@@ -304,6 +305,9 @@ Try filters for:
 
 1. Open your web browser
 2. Navigate to the Google Cloud Console and sign in
+
+   **Note:** If Organization is the default elected project profile participants need to switch by toggling from Organization to None, and afterwards select My Billing Account.
+
 3. In the **GCP Console Search Bar**, type `All Products` and select **All Products** from the drop-down
 4. On the All Products page, under **Management**, click **Billing**
 5. Select your billing account from the Billing screen
@@ -353,14 +357,13 @@ Try filters for:
   - Compute Engine
   - Cloud Storage
   - Container Registry
-- Document current baseline:
-  - Create a baseline cost matrix
-  - Note storage and compute usage patterns
+- Participants take note of the current baseline:
+  - Note usage patterns
 
 #### Enhanced Report Features (2025)
 
 - Save custom view: click **Save as new**, name “ML Migration Baseline” and set it as your monitoring view
-- Export data: click **Export** → **Download CSV** for offline AWS/GCP comparison
+- Export report data: click **Print** or select **Download CSV** for offline AWS/GCP comparison
 
 ---
 
