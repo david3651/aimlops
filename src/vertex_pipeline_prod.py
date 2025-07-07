@@ -230,18 +230,21 @@ def prod_diabetes_pipeline(
 ):
     preprocess_task = preprocess_data_op(
         input_gcs_uri=input_raw_data_gcs_uri
-    ).set_machine_type("n1-standard-1")
+    )
+    preprocess_task.set_cpu_limit("1").set_memory_limit("3.75G")
 
     train_task = train_model_op(
         train_data=preprocess_task.outputs["output_train_data"],
         reg_rate=reg_rate
-    ).set_machine_type("n1-standard-1")
+    )
+    train_task.set_cpu_limit("1").set_memory_limit("3.75G")
 
     eval_task = evaluate_model_op(
         model=train_task.outputs["output_model"],
         test_data=preprocess_task.outputs["output_test_data"],
         min_accuracy=min_accuracy
-    ).set_machine_type("n1-standard-1")
+    )
+    eval_task.set_cpu_limit("1").set_memory_limit("3.75G")
 
     with dsl.If(
         eval_task.outputs["Output"] >= min_accuracy,
@@ -250,7 +253,8 @@ def prod_diabetes_pipeline(
         approved_task = model_approved_op(
             model_accuracy=eval_task.outputs["Output"],
             model=train_task.outputs["output_model"]
-        ).set_machine_type("e2-custom-1-1024")
+        )
+        approved_task.set_cpu_limit("1").set_memory_limit("1G")
         register_task = register_model_op(
             project_id=project_id,
             region=region,
@@ -259,7 +263,7 @@ def prod_diabetes_pipeline(
             parent_model=parent_model
         )
         register_task.after(approved_task)
-        register_task.set_machine_type("n1-standard-1")
+        register_task.set_cpu_limit("1").set_memory_limit("3.75G")
 
     with dsl.If(
         eval_task.outputs["Output"] < min_accuracy,
@@ -269,4 +273,4 @@ def prod_diabetes_pipeline(
             model_accuracy=eval_task.outputs["Output"],
             min_accuracy=min_accuracy
         )
-        rejected_task.set_machine_type("e2-custom-1-1024")
+        rejected_task.set_cpu_limit("1").set_memory_limit("1G")
