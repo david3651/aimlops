@@ -80,6 +80,11 @@ jobs:
           echo "dev_pipeline_path_abs=${{ github.workspace }}/${{ env.DEV_PIPELINE_COMPILED_FILE }}" >> $GITHUB_OUTPUT
           echo "prod_pipeline_path_abs=${{ github.workspace }}/${{ env.PROD_PIPELINE_COMPILED_FILE }}" >> $GITHUB_OUTPUT
 
+      - name: Audit CPU Limits (Dev and Prod Pipelines)
+        run: |
+          python src/audit_cpu_limits.py "${{ env.DEV_PIPELINE_COMPILED_FILE }}"
+          python src/audit_cpu_limits.py "${{ env.PROD_PIPELINE_COMPILED_FILE }}"
+
       - name: Upload compiled pipelines
         uses: actions/upload-artifact@v4.3.4
         with:
