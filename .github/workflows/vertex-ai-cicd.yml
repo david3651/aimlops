@@ -178,6 +178,9 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Delay to prevent quota contention
+        run: sleep 120
+
       - name: Check out repo
         uses: actions/checkout@v4.1.7
 
