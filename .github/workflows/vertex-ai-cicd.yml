@@ -1,5 +1,11 @@
 name: Vertex AI CI/CD - Train Model (Dev & Prod)
 
+# This GitHub Actions workflow is triggered on the following events:
+# - A push to the 'main' branch.
+# - A pull request targeting the 'main' branch.
+# - Manual invocation via 'workflow_dispatch'.
+#
+# Uncomment the second 'branches' line under 'push' to also trigger on any branch matching 'feature/*'.
 on:
   push:
     branches: [main]
@@ -7,6 +13,40 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # ------------------------------------------------------------------------------
+  # Environment Variables Documentation
+  #
+  # This section defines environment variables used throughout the Vertex AI CI/CD
+  # workflow for both development and production pipelines.
+  #
+  # Common Variables:
+  #   - GCP_PROJECT_ID: Google Cloud project identifier (from secrets).
+  #   - GCP_REGION: Google Cloud region for Vertex AI resources.
+  #   - MODEL_DISPLAY_NAME: Display name for the deployed model.
+  #   - SHARED_MLOPS_BUCKET_NAME: GCS bucket for shared MLOps assets (from secrets).
+  #   - PIPELINE_RUNS_GCS_ROOT_BASE: Root GCS path for pipeline run artifacts.
+  #   - VERTEX_PIPELINE_SERVICE_ACCOUNT: Service account email for Vertex AI pipelines.
+  #
+  # Development Pipeline Variables:
+  #   - DEV_PIPELINE_PYTHON_FILE: Path to the development pipeline Python source.
+  #   - DEV_PIPELINE_COMPILED_FILE: Output file for compiled development pipeline.
+  #   - DEV_PIPELINE_DISPLAY_NAME: Display name for the development pipeline.
+  #   - DEV_INPUT_DATA_GCS_URI: GCS URI for development input data.
+  #   - DEV_REG_RATE: Regularization rate for development model training.
+  #   - DEV_MIN_ACCURACY: Minimum accuracy threshold for development model.
+  #
+  # Production Pipeline Variables:
+  #   - PROD_PIPELINE_PYTHON_FILE: Path to the production pipeline Python source.
+  #   - PROD_PIPELINE_COMPILED_FILE: Output file for compiled production pipeline.
+  #   - PROD_PIPELINE_DISPLAY_NAME: Display name for the production pipeline.
+  #   - PROD_INPUT_DATA_GCS_URI: GCS URI for production input data.
+  #   - PROD_REG_RATE: Regularization rate for production model training.
+  #   - PROD_MIN_ACCURACY: Minimum accuracy threshold for production model.
+  #
+  # Secrets:
+  #   - All variables referencing `${{ secrets.* }}` are securely injected from
+  #     GitHub Actions secrets and should be configured in the repository settings.
+  # ------------------------------------------------------------------------------
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

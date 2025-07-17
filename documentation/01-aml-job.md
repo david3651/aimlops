@@ -1,7 +1,8 @@
 ---
+---
 challenge:
-    module: Use an Azure Machine Learning job for automation
-    challenge: '1: Create an Azure Machine Learning job'
+    module: Use a Vertex AI Custom Training Job for Automation
+    challenge: '1: Create a Vertex AI Custom Training Job'
 ---
 
 <style>
@@ -9,32 +10,32 @@ challenge:
   border: none;
   color: white;
   padding: 12px 28px;
-  background-color: #008CBA;
+  background-color: #4285F4; /* Updated button color to Google Blue */
   float: right;
 }
 </style>
 
-# Challenge 1: Create an Azure Machine Learning job
+# Challenge 1: Create a Vertex AI Custom Training Job
 
-<button class="button" onclick="window.location.href='https://microsoftlearning.github.io/mslearn-mlops/';">Back to overview</button>
+<button class="button" onclick="window.location.href='https://cloud.google.com/vertex-ai/docs';">Back to overview</button>
 
 ## Challenge scenario
 
-To automate machine learning workflows, you can define machine learning tasks in scripts. To execute any workflow consisting of Python scripts, use Azure Machine Learning jobs. Azure Machine Learning jobs store all metadata of a workflow, including input parameters and output metrics. By running scripts as jobs, it's easier to track and manage your machine learning models.
+To automate machine learning workflows, you can define machine learning tasks in scripts. To execute any workflow consisting of Python scripts, use Vertex AI Custom Training Jobs. Vertex AI Custom Training Jobs store all metadata of a workflow, including input parameters and output metrics. By running scripts as jobs, it's easier to track and manage your machine learning models.
 
 ## Prerequisites
 
-If you haven't, complete the [previous challenge](00-script.md) before you continue.
+If you haven't, complete the [previous challenge](00-gscript.md) before you continue.
 
 ## Objectives
 
 By completing this challenge, you'll learn how to:
 
-- Define an Azure Machine Learning job in YAML.
-- Run an Azure Machine Learning job with the CLI v2.
+- Define a Vertex AI Custom Training Job using the Vertex AI SDK.
+- Run a Vertex AI Custom Training Job.
 
 > **Important!**
-> Each challenge is designed to allow you to explore how to implement DevOps principles when working with machine learning models. Some instructions may be intentionally vague, inviting you to think about your own preferred approach. If for example, the instructions ask you to create an Azure Machine Learning workspace, it's up to you to explore and decide how you want to create it. To make it the best learning experience for you, it's up to you to make it as simple or as challenging as you want.
+> Each challenge is designed to allow you to explore how to implement DevOps principles when working with machine learning models. Some instructions may be intentionally vague, inviting you to think about your own preferred approach. If for example, the instructions ask you to create a Vertex AI Workbench instance, it's up to you to explore and decide how you want to create it. To make it the best learning experience for you, it's up to you to make it as simple or as challenging as you want.
 
 ## Challenge Duration
 
@@ -42,42 +43,34 @@ By completing this challenge, you'll learn how to:
 
 ## Instructions
 
-In the **src/model** folder, you'll find a Python script which reads CSV files from a folder and uses the data to train a classification model. In the **src** folder, you'll find a YAML file to define a job. There are values missing in the YAML file. It's up to you to complete it. 
+In the **src/model** folder, you'll find a Python script (`train.py`) which reads CSV files from a folder in Google Cloud Storage (GCS) and uses the data to train a classification model.
 
-- Create an Azure Machine Learning workspace and a compute instance.
-- Use the CLI (v2) to create a registered data asset with the following configuration:
-    - **Name**: *diabetes-dev-folder*
-    - **Path**: The **data** folder in the **experimentation** folder which contains the CSV file to train the model. The path should point to the folder, not to the specific file.
+- Create a Vertex AI Workbench instance.
+- Upload the contents of your `experimentation/data` folder to a Google Cloud Storage (GCS) bucket.
 
-<details>
-<summary>Hint</summary>
-<br/>
-Using the CLI (v2) you can create a data asset by defining the <a href="https://docs.microsoft.com/azure/machine-learning/reference-yaml-data">configuration in a YAML file</a> <b>or</b> by specifying the configuration in the <a href="https://docs.microsoft.com/cli/azure/ml/data?view=azure-cli-latest">CLI command</a>.
-</details>
- 
-- Complete the `job.yml` file to define the Azure Machine Learning job to run the `train.py` script, with the registered data asset as input. 
-- Use the CLI (v2) to run the job. 
+- Use the Vertex AI SDK to create and submit a Custom Training Job. You will not need a separate YAML file, as the job will be defined and launched directly through Python code in your Workbench instance. The key steps are:
+    - **Define a `CustomTrainingJob`:**  Specify the training script path (`src/model/train.py`), the entrypoint function, and the container image to use for the training environment. Consider using a prebuilt container or building your own.
+    - **Define a `WorkerPoolSpec`:** Configure the machine type, accelerator type (if needed), and replica count for your training job.
+    - **Create a `CustomJob` instance:** Combine the `CustomTrainingJob` and `WorkerPoolSpec` to create a `CustomJob` object.
+    - **Submit the job:** Use the `run()` method of the `CustomJob` object to submit the training job to Vertex AI.  Pass in the GCS path to your training data, any hyperparameters for your training script, and other relevant configurations like the GCS staging bucket for outputs and experiment tracking settings.
 
-> **Tip:**
-> Whether you're working from the Cloud Shell, compute instance or a local terminal, make sure to update the Azure Machine Learning extension for the CLI to the latest version.
+> **Tip:**  Refer to the Vertex AI Python SDK documentation and examples for detailed guidance on creating and running Custom Training Jobs. You can find links to relevant resources in the "Useful Resources" section below.
 
 ## Success criteria
 
 To complete this challenge successfully, you should be able to show:
 
-- A successfully completed job in the Azure Machine Learning workspace. The job should contain all input parameters and output metrics for the model you trained.
+- A successfully completed Custom Training Job in the Vertex AI console. The job details should include the input parameters, output metrics, training data path, and a link to the trained model artifacts in GCS.
 
 > **Note:**
-> If you've used a compute instance for experimentation, remember to stop the compute instance when you're done. 
+> If you've used a Vertex AI Workbench instance for experimentation, remember to stop the instance when you're done to avoid unnecessary charges. Also, clean up any Google Cloud Storage buckets and Vertex AI resources you created during testing.
 
 ## Useful resources
 
-- [Learning path on how to use the CLI v2 with Azure Machine Learning.](https://docs.microsoft.com/learn/paths/train-models-azure-machine-learning-cli-v2/)
-- [CLI reference for managing Azure Machine Learning workspaces](https://docs.microsoft.com/cli/azure/ml/workspace?view=azure-cli-latest)
-- [CLI reference for managing Azure ML compute resources](https://docs.microsoft.com/cli/azure/ml/compute?view=azure-cli-latest)
-- [CLI reference for managing Azure ML data assets](https://docs.microsoft.com/cli/azure/ml/data?view=azure-cli-latest)
-- [CLI reference for jobs.](https://docs.microsoft.com/cli/azure/ml/job?view=azure-cli-latest)
-- [YAML reference for command jobs.](https://docs.microsoft.com/azure/machine-learning/reference-yaml-job-command) 
-- [Example job YAML files.](https://github.com/Azure/azureml-examples/tree/main/cli/jobs/basics) 
+- [Vertex AI Custom Training Documentation](https://cloud.google.com/vertex-ai/docs/training/custom-training)
+- [Vertex AI Python SDK Documentation](https://cloud.google.com/python/docs/reference/aiplatform/latest)
+- [Vertex AI Workbench User Guide](https://cloud.google.com/vertex-ai/docs/workbench)
+- [Google Cloud Storage Client Libraries](https://cloud.google.com/storage/docs/reference/libraries)
+- [Example Notebooks for Vertex AI Training](https://github.com/GoogleCloudPlatform/vertex-ai-samples/tree/main/notebooks/official/training)
 
-<button class="button" onclick="window.location.href='02-github-actions';">Continue with challenge 2</button>
+<button class="button" onclick="window.location.href='02-github-actions.md';">Continue with challenge 2</button>

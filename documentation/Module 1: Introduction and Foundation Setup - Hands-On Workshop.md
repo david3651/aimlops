@@ -57,26 +57,26 @@ Set up and familiarize yourself with the AWS Cost Explorer interface.
 1. Open your web browser
 2. Navigate to the AWS Management Console
 3. Sign in with your AWS credentials
-4. In the **AWS Console Search Bar**, type “Cost Explorer”
-5. Select **Cost Explorer** from the search results under **Billing**
-6. Click **Launch Cost Explorer** (first-time users may experience up to a 24-hour delay for data population)
+4. In the **AWS Console Search Bar**, type **Cost Explorer**
+5. Select **Cost Explorer** from the Billing and Cost Management feature
+6. (Optional) Click **Launch Cost Explorer** (first-time users may experience up to a 24-hour delay for data population)
 
 #### Initial Cost Explorer Setup
 
 **Setup Checklist:**
 
 - Verify the main dashboard is visible
-- Set time range to **Last 13 months** using the date picker
+- Set time range to **Last 3 months** using the date picker, and select **Apply**
 - Set granularity to **Monthly**
 - Group by **Service**
-- Enable **Forecast** toggle at the bottom of the chart
+- In the Advanced options section, select **Show Forecasted values** at the bottom of the chart from the additional data settings.
 
 #### Interface Familiarization
 
 - Explore the dashboard chart area
-- Test chart types (bar, line, stacked)
-- Review the left-side filters panel
-- Try the **Compare** feature in Report Parameters
+- Try the built-in chart types (bar, line, stacked)
+- Review the filters panel
+
 
 💡 Pro Tip: Use preconfigured views like “Monthly costs by service” or “RI Utilization” for quick insights. Capture screenshots of your initial dashboard for later comparison.
 
@@ -89,18 +89,17 @@ Set up and familiarize yourself with the AWS Cost Explorer interface.
 #### 1. Filter for SageMaker Services
 
 - In the Filters panel, click **Service**
-- Search and select **Amazon SageMaker**
-- Click **Apply filters**
-- Set the time range to **Last 6 months**
+- Search and select **SageMaker**
+- Click **Apply**
+- Set the Date range to **6 months**
 - Change granularity to **Daily**
 
 #### 2. Analyze SageMaker Cost Components
 
-- Group by **Usage Type**
+- Select **Usage Type** and review.
 - Identify top cost drivers
 - Click chart segments to drill down
-- Use **Compare** to examine month-over-month changes
-- Log findings in a spreadsheet
+- Log findings in a spreadsheet. **Ask presenter to share template and example worksheet.**
 
 #### 3. Create Cost Breakdown Analysis Table
 
@@ -115,6 +114,7 @@ Set up and familiarize yourself with the AWS Cost Explorer interface.
 
 #### 4. Document Key Findings
 
+- The following questions should be answered in your analysis:
 - Which instance types consume the most budget?
 - When is usage the highest?
 - Any idle periods or unnecessary resources?
@@ -125,6 +125,10 @@ Set up and familiarize yourself with the AWS Cost Explorer interface.
 ### Step 1.3: Advanced Cost Analysis Techniques (20 minutes)
 
 #### 1. Usage Pattern Analysis
+
+**Important**: Enabling hourly granularity can take up to 48 hours to populate data. For hourly-level data, we charge $0.01 per 1,000 usage records monthly.
+
+**Note**: This is optional but may not be available for all accounts.
 
 - Switch to **Hourly** granularity for the recent week
 - Detect peak usage periods and idle patterns
@@ -137,8 +141,8 @@ Set up and familiarize yourself with the AWS Cost Explorer interface.
 Try filters for:
 
 - **Region**: Concentration of activity
-- **Usage Type**: (e.g., ml.m5.large)
-- **Linked Account**: For AWS Organizations
+- **Usage Type**: (e.g., ml.t3.medium)
+
 
 #### 3. Cost Anomaly Detection Review
 
@@ -146,8 +150,9 @@ Try filters for:
 
 - In the AWS Console **Search Bar**, type **Cost Anomaly Detection**
 - Select the service
-- Review existing anomalies and daily alert settings
-- Click into anomalies to investigate
+- Select **Get started**, and take the tour if available. Do not create a new cost monitor. If needed, cancel to return to the main dashboard.
+- Review existing **detected anomalies** and **cost anomaly detection summary**.
+- Click into **cost monitors** and **Alert subscriptions** to review existing configurations.
 - Document findings
 
 💡 Pro Tip: Idle weekends or underutilized resources are low-hanging fruit for cost cuts.
@@ -161,7 +166,7 @@ Try filters for:
 
 #### 1. Navigate to AWS Budgets
 
-- In the AWS Console search bar, type “Budgets”
+- In the AWS Console search bar, type **“Budgets”**
 - Select “AWS Budgets” from the search results
 - Click the **Create budget** button
 
@@ -192,6 +197,8 @@ Try filters for:
 5. Click **Apply filter**
 
 #### 3. Configure Alert Thresholds
+
+**Note**: You do not need to create every alert threshold.
 
 1. Click **Next** to proceed to alert configuration
 2. Select **Add an alert threshold**
@@ -225,6 +232,8 @@ Try filters for:
 ---
 
 ### Step 2.2: Advanced Budget Configuration (25 minutes)
+
+**Important**: > This task is optional. Participants can skip this task to proceed to the GCP section which is the main focus of the workshop.
 
 #### 1. Create Environment-Specific Budgets
 
@@ -263,9 +272,8 @@ Try filters for:
 
 - Navigate to the main Budgets dashboard
 - Review all created budgets in list view
-- Click each budget name to verify settings
-- Check the **Actions** column for status
-- Test email delivery with a low threshold (e.g., 1%)
+- Click each budget **radio box** to view details in the right panel **Budget preview.**
+- Check the **Thresholds** column for status (Green, Yellow, Red) Green is OK, Yellow is approaching threshold, Red is over budget.
 - Document the monitoring process
 
 ---
@@ -502,16 +510,15 @@ Create this table in your spreadsheet for future ML workload planning:
 1. Access Google Cloud Pricing Calculator
 
    - Open a new browser tab
-   - Navigate to: Google Cloud Pricing Calculator
-   - Review available product categories
-   - Understand the estimate building process
-   - Note the save and share functionality
+   - Navigate to: [Google Cloud Pricing Calculator](https://cloud.google.com/products/calculator)
+   - Select **+ Add to estimate**
+   - Review available products by clicking **Sort by most popular**, then select **Sort by product name** from the drop down menu
+
 
 2. Prepare for ML Workload Estimation
 
    - Reference your AWS analysis: have your SageMaker cost breakdown available
-   - Set region: choose “us-central1” (Iowa) to match typical AWS usage
-   - Plan estimation approach: break down by major service categories
+   - Reference region to match typical AWS usage by region
 
 ---
 
@@ -519,23 +526,34 @@ Create this table in your spreadsheet for future ML workload planning:
 
 1. Add Vertex AI Custom Training
 
-   - In the calculator, click “Vertex AI” → “Custom training”
+   - In the calculator, Search by product name by searching for “Vertex AI training”
    - Configure training parameters based on your AWS analysis:
-     - Region: us-central1
-     - Machine type: n1-standard-8 (closest to ml.m5.2xlarge)
-     - Training hours per month: [Based on AWS SageMaker analysis]
-     - Number of training jobs: [Based on current frequency]
+     - Region: Use the same region as your AWS SageMaker usage
+     - Machine type: n1-standard-8 (closest to ml.m5.2xlarge). Alternatively, use machine types similar to your AWS instance types.
+     Note: Machine Types Website: https://cloud.google.com/vertex-ai/docs/training/configure-compute#machine-types
+     - In Accelerator Type, select **No accelerator**, alternatively, select **GPU, or TPU** if your AWS SageMaker training job uses acclerators.
+     - In the Machine Type Machine Family section, select **General purpose**, alternatively select **Compute optimized or Memory optimized** based on your AWS instance type.
+     - In Series, select **N1** or **N2** based on your AWS instance type.
+     - In Machine Type, select **n1-standard-4**, or **n2-standard-4**.
+     - Average training job length (hours): [Based on AWS SageMaker analysis] Enter **6**
+     - Number of training jobs per month: [Based on current frequency] Enter **90**
 
+   - **Do not add any additional training jobs at this time. The following information is for future consideration**:
    - Add GPU configuration if needed:
      - GPU type: NVIDIA V100 (if using GPU instances)
      - Number of GPUs: match AWS configuration
      - GPU hours per month: [Based on AWS usage]
 
+   - The following information can be completed by using the same task steps as aforementioned in the section **Add Vertex AI Custom Trianing**.
    - Add storage for training:
-     - Persistent disk: 100 GB SSD
-     - Adjust size based on your storage needs
+     - Select from Service type, **Persistent disk**: 100 GB SSD
+     - Zonal Standard PD: 100 GB
+     - Ensure the same region as your training jobs
+     - Snapshot Storage: 100 GiB
+     - Total Disks: Enter **1** (default)
+     - (Optional) Adjust size based on your storage needs
 
-2. Configure Multiple Training Scenarios
+2. (Optional) Configure Multiple Training Scenarios
 
    - Development training: smaller instances, fewer hours
    - Production training: larger instances, include batch jobs
@@ -546,17 +564,11 @@ Create this table in your spreadsheet for future ML workload planning:
 
 1. Add Vertex AI Prediction Endpoints
 
-   - In the calculator, click “Vertex AI” → “Online prediction”
-   - Configure endpoint parameters:
-     - Machine type: n1-standard-4
-     - Number of nodes: start with 2, autoscale to 5
-     - Monthly requests: [Based on AWS endpoint usage]
-     - Avg. request size: [Estimate in KB]
-     - Avg. response size: [Estimate in KB]
+   - In the calculator, click **“Vertex AI” →  "prediction”**
 
 2. Add Cloud Storage Estimation
 
-   - Click “Cloud Storage”
+   - Search for “Cloud Storage”
    - Configure storage tiers:
      - Standard: [GB] for active data
      - Nearline: [GB] for infrequent data
@@ -567,16 +579,12 @@ Create this table in your spreadsheet for future ML workload planning:
 
 3. Add Compute Engine for Custom ML Workloads
 
-   - Click “Compute Engine”
+   - Search for “Compute Engine”
    - Configure VM instances:
-     - Instance type: custom or predefined
-     - Operating hours per month: [Hours]
-     - Persistent disk: [GB]
-     - GPUs: add if required
 
 4. Add Networking Costs
 
-   - Click “Network”
+   - Search for “Network”
    - Configure data transfer:
      - Egress to internet: [GB]
      - Inter-region traffic: [GB]
@@ -587,16 +595,16 @@ Create this table in your spreadsheet for future ML workload planning:
 
 1. Review Total Estimate
 
-   - Scroll to the estimate summary
-   - Review monthly totals by service
-   - Check annual projections
-   - Note any suggested cost optimizations
+   - Scroll to the Estimated Costs section
+   - Review monthly total
+   - Select **Open Detailed View** to see breakdown by service
+   - Review the Cost Estimate Summary
+
 
 2. Save and Export Estimate
 
-   - Save estimate: name “ML Migration Cost Projection” with description
-   - Share estimate: click “Share estimate” and save the URL
-   - Export data: click “Export” → download CSV for detailed analysis
+   - Share estimate: click “Share" and save the URL Link
+   - Export data: click Download CSV → download CSV for detailed analysis
 
 
 ---
@@ -723,11 +731,11 @@ Create a comprehensive TCO analysis:
 
 ## Contact Information
 
-- Finance Team: [Contact information]
+- FinOps Team: [Contact information]
 - Cloud Operations: [Contact information]
-- ML Team Leads: [Contact information]
-- Escalation Manager: [Contact information]
-
+- MLOPS Team Lead Strategist: [Contact information]
+- Manager: [Contact information]
+- Model Ops Director: [Contact information]
 ---
 
 ## Lab 1.2 Deliverables Checklist
