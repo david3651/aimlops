@@ -349,22 +349,22 @@ Try filters for:
 
 ### Step 1.2: Cloud Billing Reports Analysis (25 minutes)
 
-1. In the **GCP Console Search Bar**, type `Reports` and select **Reports** under **Cost management**
+1. In the **GCP Console Search Bar**, type `Reports` and select **Reports**, which is also available under **Cost management**
 2. Familiarize yourself with the Reports interface
 
 #### Configure Analysis View
 
-- Set time range to **Last 6 months**
-- Group by: Service, Project, Project hierarchy (folder-level), or SKU
+- Set time range to **Last 90 days**
+- Group by: Service, Project, Project hierarchy (folder-level), or SKU. Leave as default **Service**.
 - Apply filters: Projects, Services, SKUs, Locations, Labels, Folders & Organizations
 
 #### Analyze Current GCP Usage for ML Services
 
-- Use the Filters panel to include only AI/ML services:
+- Use the Filters panel to include only AI/ML services: Note: To toggle panel filters, click the **Filters** button in the top right corner of the Reports interface its icon looks like the following symbol **"<|"**
   - Vertex AI
   - Compute Engine
   - Cloud Storage
-  - Container Registry
+  - Artifact Registry
 - Participants take note of the current baseline:
   - Note usage patterns
 
@@ -386,13 +386,9 @@ Try filters for:
 
 #### Enhanced Savings and Credits Analysis (2025)
 
-1. In the **GCP Console Search Bar**, type `Savings` and select **Savings** (formerly Discounts & credits)
-2. Review subcategories: committed use discounts and sustained use discounts
+1. In the **GCP Console Search Bar**, type `FinOps hub` and select **FinOps hub** (formerly Savings & credits). In a later task, you will learn how to use the FinOps hub to analyze savings and credits.
 
-#### Export and Save Capabilities
-
-- Export data: click **Export** → **Download CSV**
-- Save report: click **Save as new**, name “ML Migration Baseline”
+2. Review subcategories in Cost optimization: committed use discounts and CUD analysis.
 
 ---
 
