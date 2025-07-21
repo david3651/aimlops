@@ -1,7 +1,7 @@
 """
 Vertex AI KFP Pipeline for Development
 - Preprocesses data from GCS
-- Trains a model
+- Trains a model in development mode
 - Evaluates the model
 - Conditionally registers the model in Vertex AI Model Registry if accuracy is sufficient
 """
